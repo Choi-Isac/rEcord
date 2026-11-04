@@ -121,11 +121,6 @@ img, svg { display: block; }
 .badge-est { color: #7a5300; background: #fff3d1; }
 .badge-direct { color: var(--green); background: var(--green-soft); }
 
-.badge-soon {
-  display: inline-block; font-size: 11px; font-weight: 700; color: var(--ink-2);
-  background: var(--line); padding: 2px 8px; border-radius: 99px; white-space: nowrap;
-}
-
 .pills { display: flex; gap: 6px; flex-wrap: wrap; }
 .pill {
   border: 1px solid var(--line); background: var(--surface); padding: 7px 16px;

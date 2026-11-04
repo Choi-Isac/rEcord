@@ -30,7 +30,7 @@ const TRUST = [
 export default function HomeClassic() {
   const { responses } = useResponses();
   const last = responses.at(-1);
-  const lastTotal = last ? calculate(last.answers).total.value : null;
+  const lastTotal = last ? calculate(last.answers, last.detail).total.value : null;
 
   return (
     <>

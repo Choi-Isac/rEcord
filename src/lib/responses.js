@@ -5,7 +5,7 @@ import { FACTOR_VERSION } from "./carbon/factors.js";
 import { QUESTIONS, answerKeys } from "./carbon/questions.js";
 import { useStoredState } from "./storage.js";
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2; // 2: 자세히 입력(detail, detailOpened) 추가
 export const RESPONSES_KEY = "carboncalc:responses";
 export const DRAFT_KEY = "carboncalc:draft";
 
@@ -20,22 +20,25 @@ export function semesterOf(date = new Date()) {
 const makeId = () =>
   globalThis.crypto?.randomUUID?.() ?? `r-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-export function createResponse({ answers, touched, startedAt, consent }) {
+export function createResponse({ answers, touched, startedAt, consent, detail = {}, detailOpened = [] }) {
   const now = new Date();
   return {
     id: makeId(),
     schemaVersion: SCHEMA_VERSION,
     factorVersion: FACTOR_VERSION,
-    inputMode: "simple", // v0.2: 자세히 입력을 펼친 경우 "detailed"
+    // 자세히 입력한 문항이 하나라도 있으면 "detailed"
+    inputMode: Object.keys(detail).length ? "detailed" : "simple",
     semester: semesterOf(now),
     startedAt,
     completedAt: now.toISOString(),
     durationSec: Math.round((now - new Date(startedAt)) / 1000),
     consent,
     answers,
+    detail, // 자세히 입력한 문항별 값 (간편 입력보다 우선)
+    detailOpened, // 자세히 입력을 펼쳐 본 문항 (값을 바꾸지 않았어도)
     // 직접 움직이지 않고 기본값 그대로 둔 슬라이더 (기본값 의존도 측정용)
-    defaultsUsed: QUESTIONS.filter((q) => q.type !== "chips" && !touched.includes(q.id)).flatMap(answerKeys),
-    profile: { university: "", department: "", region: "" },
+    defaultsUsed: QUESTIONS.filter((q) => q.type !== "chips" && !touched.includes(q.id) && !detail[q.id]).flatMap(answerKeys),
+    profile: { region: "" }, // 거주 지역 (결과 화면의 포인트 안내)
     feedback: null,
   };
 }

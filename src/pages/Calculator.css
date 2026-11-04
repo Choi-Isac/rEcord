@@ -1,16 +1,12 @@
 /* ── 시작 화면 ───────────────────────────── */
 .start { display: grid; gap: 16px; max-width: 880px; }
-.mode-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.mode-cards { display: grid; gap: 14px; }
 .mode-card { padding: 24px 26px; }
 .mode-card h3 { margin: 10px 0 6px; font-size: 22px; letter-spacing: -.02em; }
 .mode-card p { margin: 0 0 14px; color: var(--ink-2); font-size: 15px; }
 .mode-card.is-available { border: 2px solid var(--accent); }
-.mode-card.is-disabled { background: #f6f4ef; color: var(--ink-3); }
-.mode-card.is-disabled h3 { color: var(--ink-2); }
-.mode-card .mode-later { font-size: 13px; color: var(--ink-3); margin: 0; }
 .mode-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .mode-time { font-size: 13px; font-weight: 700; color: var(--accent); }
-.is-disabled .mode-time { color: var(--ink-3); }
 .mode-cats { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0; }
 .mode-cats li { background: var(--bg); padding: 5px 11px; border-radius: 99px; font-size: 13px; font-weight: 600; }
 
@@ -23,14 +19,6 @@
 /* ── 간편 입력 ───────────────────────────── */
 .calc-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
 .calc-main { min-width: 0; }
-
-.mode-tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 14px; }
-.mode-tab {
-  display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 8px 16px;
-  border-radius: 9px; font-size: 14px; font-weight: 700; color: var(--ink-2); cursor: pointer;
-}
-.mode-tab[aria-selected="true"] { background: var(--accent); color: #fff; }
-.mode-tab:disabled { cursor: not-allowed; color: var(--ink-3); }
 
 /* 단계 표시: 누르면 해당 영역 화면으로 이동 */
 .stepper { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0 0 8px; }
@@ -134,7 +122,6 @@
   .step-next { display: none; }
 }
 @media (max-width: 640px) {
-  .mode-cards { grid-template-columns: 1fr; }
   .mode-card, .consent { padding: 20px; }
   .q { padding: 18px 16px; }
   .chips { grid-template-columns: repeat(2, 1fr); }
@@ -144,6 +131,66 @@
   .stepper-label, .stepper small { display: none; }
   .stepper .is-current button { gap: 6px; }
   .stepper .is-current .stepper-label { display: inline; }
+}
+
+/* ── 자세히 입력 펼침 (v0.2) ──────────────── */
+.q-label .badge-direct { margin-left: 8px; }
+.q-simple.is-overridden { opacity: .4; filter: grayscale(.6); }
+.q-override { margin: 8px 0 0; font-size: 13px; color: var(--green); font-weight: 600; }
+
+.detail-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.detail-toggle {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 12px;
+  font-size: 13px; font-weight: 700; color: var(--accent); cursor: pointer;
+}
+.detail-toggle:hover:not(:disabled) { border-color: var(--accent); }
+.detail-toggle[aria-expanded="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.detail-toggle:disabled { color: var(--ink-3); cursor: not-allowed; }
+.detail-wait, .detail-summary { font-size: 13px; color: var(--ink-3); }
+.detail-summary { color: var(--ink-2); font-weight: 600; }
+.detail-reset { font-size: 13px; margin-left: auto; }
+
+.detail-all {
+  margin-left: auto; align-self: center; border: 1px solid var(--line); background: var(--surface); border-radius: 99px;
+  padding: 7px 14px; font-size: 13px; font-weight: 700; color: var(--accent); cursor: pointer; white-space: nowrap;
+}
+.detail-all:hover { border-color: var(--accent); }
+
+.detail { margin-top: 12px; padding: 16px 18px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+.detail-intro { margin: 0 0 12px; font-size: 13px; color: var(--ink-2); }
+.detail-fields { display: grid; gap: 10px; }
+.detail-heading { margin: 6px 0 0; font-size: 14px; font-weight: 700; }
+.detail-heading:first-child { margin-top: 0; }
+.d-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; }
+.d-label { font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.d-num { display: inline-flex; align-items: center; gap: 6px; }
+.d-num .input { width: 96px; padding: 7px 10px; text-align: right; font-variant-numeric: tabular-nums; }
+.d-unit { font-size: 13px; color: var(--ink-3); min-width: 34px; }
+.d-choice { display: flex; flex-wrap: wrap; gap: 6px; }
+.d-choice button, .d-days button {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 6px 12px;
+  font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer;
+}
+.d-choice button:hover, .d-days button:hover { border-color: var(--ink-3); }
+.d-choice button[aria-checked="true"], .d-days button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.d-days { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.d-days button { width: 40px; padding: 7px 0; }
+.d-days-count { margin-left: 6px; font-size: 14px; font-weight: 700; color: var(--accent); }
+.d-shares { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 16px; }
+.d-share { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.d-share .input { width: 72px; }
+.d-total { grid-column: 1 / -1; margin: 0; font-size: 13px; font-weight: 700; color: var(--green); }
+.d-total.is-off { color: var(--bad); }
+.d-percent { display: inline-flex; align-items: center; gap: 10px; min-width: 220px; flex: 1; max-width: 320px; }
+.d-percent output { font-weight: 800; color: var(--accent); min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+.d-bill { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.d-bill .d-num .input { width: 120px; }
+
+@media (max-width: 640px) {
+  .q-section-head { flex-wrap: wrap; }
+  .detail-all { margin-left: 0; }
+  .detail { padding: 14px; }
+  .d-percent { min-width: 0; width: 100%; max-width: none; }
 }
 
 .prefill-note { margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--green-soft); font-size: 14px; color: var(--green); font-weight: 600; }

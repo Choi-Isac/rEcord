@@ -1,8 +1,9 @@
-// 탄소발자국 계산 엔진: 원본 입력값(칩·슬라이더 선택) → 항목별 연간 배출량(kg CO₂e)
+// 탄소발자국 계산 엔진: 원본 입력값(칩·슬라이더 선택 + 자세히 입력) → 항목별 연간 배출량(kg CO₂e)
 // 화면과 분리해 두어 scripts/check-cases.mjs로 가상 이용자 사례를 손계산과 대조할 수 있다.
 import {
   COMMUTE,
   COOL_LEVEL,
+  DETAIL,
   EF,
   EXTRA_PERSON_SHARE,
   FLIGHTS,
@@ -13,6 +14,7 @@ import {
   HOUSING,
   MONTHS_PER_YEAR,
   UNCERTAINTY,
+  UNCERTAINTY_DIRECT,
   WEEKS_PER_YEAR,
 } from "./factors.js";
 
@@ -58,34 +60,143 @@ export function fillDefaults(answers) {
   return filled;
 }
 
-function itemValues(a) {
-  const commuting = a.commuteDays > 0;
+const sum = (obj) => Object.values(obj).reduce((s, v) => s + (Number(v) || 0), 0);
+
+// 비율 입력(합이 100이 아닐 수도 있음)을 합 1로 맞춘다
+function normalize(shares) {
+  const total = sum(shares);
+  return total > 0 ? Object.fromEntries(Object.entries(shares).map(([k, v]) => [k, (Number(v) || 0) / total])) : {};
+}
+
+// 간편 입력 항공 칩 → 거리대별 연간 왕복 횟수 (국내 위주 = 제주 왕복 2회)
+export const flightCounts = (choice) =>
+  Object.fromEntries(
+    Object.keys(DETAIL.flightTripKm).map((k) => [k, k === choice ? FLIGHTS[k].pkm / DETAIL.flightTripKm[k] : 0])
+  );
+
+const gasHeated = (type) => type === "gas" || type === "unknown";
+
+// 1단계: 간편 입력(answers)과 자세히 입력(detail)을 계산에 쓰는 구체적인 양으로 바꾼다.
+// 자세히 입력이 있는 문항은 그 값이 간편 입력보다 우선한다. 감축 제안도 이 값을 바꿔 다시 계산한다.
+export function resolve(answers, detail) {
+  const a = fillDefaults(answers);
+  const d = detail ?? {};
   const h = HOUSING[a.housing];
-  const share = householdShare(a.household);
-  const flight = FLIGHTS[a.flights];
+  const people = d.household?.people ?? a.household;
+  // 2명 이상이 나의 부담 비율을 넣으면 가구 전체 에너지 × 그 비율, 비우면 똑같이 나눈다
+  const myShare = people >= 2 && d.household?.myShare > 0 ? d.household.myShare / 100 : null;
+  const share = myShare !== null ? myShare * (1 + EXTRA_PERSON_SHARE * (people - 1)) : householdShare(people);
+  const billShare = myShare ?? 1 / people;
+  const heatingType = d.housing?.heating ?? "unknown";
+
+  const days = d.commuteDays ? d.commuteDays.days.length : a.commuteDays;
+  const md = d.commuteMode;
+  const cl = d.climate;
+  const coolMult = cl ? (cl.coolHours * cl.coolMonths) / (DETAIL.coolRef.hours * DETAIL.coolRef.months) : COOL_LEVEL[a.cooling - 1];
+  const heatMult = cl ? (cl.heatHours * cl.heatMonths) / (DETAIL.heatRef.hours * DETAIL.heatRef.months) : HEAT_LEVEL[a.heating - 1];
+
+  // 요금·사용량을 직접 넣으면, 모형으로 구한 사용량을 그 값에 맞춰 비례 조정한다 (요금 중 나의 몫 = 부담 비율, 없으면 균등)
+  let elecScale = 1;
+  let gasScale = 1;
+  if (cl?.elecBill > 0) {
+    const kwh = (cl.elecUnit === "kwh" ? cl.elecBill : cl.elecBill / DETAIL.wonPerKwh) * MONTHS_PER_YEAR * billShare;
+    const modeled = (h.elec + h.cool * coolMult + (heatingType === "electric" ? h.heat * heatMult * DETAIL.kwhPerM3 : 0)) * share;
+    elecScale = kwh / modeled;
+  }
+  if (cl?.gasBill > 0) {
+    const m3 = (cl.gasUnit === "m3" ? cl.gasBill : cl.gasBill / DETAIL.wonPerM3) * MONTHS_PER_YEAR * billShare;
+    const modeled = (h.hot + (gasHeated(heatingType) ? h.heat * heatMult : 0)) * share;
+    gasScale = m3 / modeled;
+  }
+
+  const meals = d.mealsOut ?? {
+    out: a.mealsOut * (1 - GOODS.deliveryShare),
+    delivery: a.mealsOut * GOODS.deliveryShare,
+  };
+  const reuse = GOODS.reuseRate[a.reusable];
 
   return {
-    commute: commuting
-      ? a.commuteDays * 2 * commuteKm(a.commuteMode, a.commuteMinutes) * COMMUTE.pkm[a.commuteMode] * COMMUTE.weeksPerYear
-      : 0,
-    homeTrips: HOME_TRIPS.roundTripsPerYear[a.homeTrips] * HOME_TRIPS.roundTripKm * HOME_TRIPS.pkm,
-    flights: flight.pkm * flight.ef,
+    commute: {
+      trips: days * 2 * COMMUTE.weeksPerYear,
+      km: d.commuteMinutes?.km ?? commuteKm(a.commuteMode, a.commuteMinutes),
+      shares: md ? normalize(md.shares) : { [a.commuteMode]: 1 },
+      taxiTrips: md ? md.taxiPerMonth * DETAIL.semesterMonths : 0,
+      carFactor: md ? DETAIL.carFuel[md.fuel] : 1,
+    },
+    homeTrips: {
+      perYear: d.homeTrips?.perYear ?? HOME_TRIPS.roundTripsPerYear[a.homeTrips],
+      pkm: DETAIL.homeTripPkm[d.homeTrips?.mode ?? "mixed"],
+    },
+    flights: d.flights ?? flightCounts(a.flights),
+    housing: a.housing,
+    share,
+    heatingType,
+    coolMult,
+    heatMult,
+    elecScale,
+    gasScale,
+    meat: d.meat ?? Object.fromEntries(Object.entries(DETAIL.meatMix).map(([k, f]) => [k, f * FOOD.servingsPerWeek[a.meat]])),
+    meals,
+    clothes: { perMonth: d.clothes?.perMonth ?? clothesCount(a.clothes), secondhand: (d.clothes?.secondhand ?? 0) / 100 },
+    // 택배: 자세히 입력하면 국내 택배와 해외직구를 나눠 받는다
+    parcels: d.parcels
+      ? { domestic: d.parcels.domestic ?? 0, overseas: d.parcels.overseas ?? 0 }
+      : { domestic: parcelCount(a.parcels), overseas: 0 },
+    disposables: {
+      drinks: d.reusable?.drinks ?? GOODS.cupsPerWeek,
+      tumbler: d.reusable ? d.reusable.tumbler / 100 : reuse,
+      deliveryReuse: d.reusable ? d.reusable.deliveryReuse / 100 : reuse,
+    },
+    // 직접 입력한 값으로 계산한 항목 (결과의 '직접 입력' 표시와 범위 계산에 쓴다)
+    direct: new Set(
+      [
+        (d.commuteDays || d.commuteMinutes || d.commuteMode) && "commute",
+        d.homeTrips && "homeTrips",
+        d.flights && "flights",
+        cl?.elecBill > 0 && "electricity",
+        cl && "cooling",
+        (cl || d.housing) && "heating",
+        cl?.gasBill > 0 && "hotWater",
+        d.meat && "meat",
+        d.mealsOut && "mealsOut",
+        d.clothes && "clothes",
+        d.parcels && "parcels",
+        d.reusable && "disposables",
+      ].filter(Boolean)
+    ),
+  };
+}
 
-    electricity: h.elec * EF.electricity * share,
-    cooling: h.cool * COOL_LEVEL[a.cooling - 1] * EF.electricity * share,
-    heating: h.heat * HEAT_LEVEL[a.heating - 1] * EF.gas * share,
-    hotWater: h.hot * EF.gas * share,
+// 2단계: 구체적인 양 → 항목별 연간 배출량(kg CO₂e)
+function itemValues(r) {
+  const h = HOUSING[r.housing];
+  const c = r.commute;
+  const taxi = Math.min(c.taxiTrips, c.trips);
+  const perKm = Object.entries(c.shares).reduce((s, [m, f]) => s + f * COMMUTE.pkm[m] * (m === "car" ? c.carFactor : 1), 0);
+  const heatScale = r.heatingType === "electric" ? r.elecScale : gasHeated(r.heatingType) ? r.gasScale : 1;
+  const mealsOverhead = Object.entries(r.meals).reduce((s, [place, n]) => s + n * DETAIL.mealOverhead[place], 0);
+  const dp = r.disposables;
+
+  return {
+    commute: c.km * (taxi * COMMUTE.pkm.taxi + (c.trips - taxi) * perKm),
+    homeTrips: r.homeTrips.perYear * HOME_TRIPS.roundTripKm * r.homeTrips.pkm,
+    flights: Object.entries(r.flights).reduce((s, [k, n]) => s + n * DETAIL.flightTripKm[k] * FLIGHTS[k].ef, 0),
+
+    electricity: h.elec * EF.electricity * r.share * r.elecScale,
+    cooling: h.cool * r.coolMult * EF.electricity * r.share * r.elecScale,
+    heating: h.heat * r.heatMult * DETAIL.heatingEf[r.heatingType] * r.share * heatScale,
+    hotWater: h.hot * EF.gas * r.share * r.gasScale,
 
     dietBase: FOOD.base,
-    meat: FOOD.servingsPerWeek[a.meat] * WEEKS_PER_YEAR * FOOD.meatServing,
-    mealsOut: a.mealsOut * WEEKS_PER_YEAR * FOOD.mealOverhead,
+    meat: Object.entries(r.meat).reduce((s, [k, n]) => s + n * DETAIL.meatServing[k], 0) * WEEKS_PER_YEAR,
+    mealsOut: mealsOverhead * WEEKS_PER_YEAR,
 
-    clothes: clothesCount(a.clothes) * MONTHS_PER_YEAR * GOODS.clothingItem,
-    parcels: parcelCount(a.parcels) * MONTHS_PER_YEAR * GOODS.parcel,
+    clothes:
+      r.clothes.perMonth * MONTHS_PER_YEAR * GOODS.clothingItem * (1 - r.clothes.secondhand * (1 - DETAIL.secondhandFactor)),
+    parcels: (r.parcels.domestic * GOODS.parcel + r.parcels.overseas * DETAIL.overseasParcel) * MONTHS_PER_YEAR,
     disposables:
-      (GOODS.cupsPerWeek * GOODS.cup + a.mealsOut * GOODS.deliveryShare * GOODS.container) *
-      WEEKS_PER_YEAR *
-      (1 - GOODS.reuseRate[a.reusable]),
+      (dp.drinks * GOODS.cup * (1 - dp.tumbler) + (r.meals.delivery ?? 0) * GOODS.container * (1 - dp.deliveryReuse)) *
+      WEEKS_PER_YEAR,
   };
 }
 
@@ -113,16 +224,25 @@ function withRange(items) {
   return { value, low: Math.max(0, value - sd), high: value + sd };
 }
 
-export function calculate(answers) {
-  const a = fillDefaults(answers);
-  const values = itemValues(a);
-  // basis: 'estimate'(간편 입력 대표값) — v0.2에서 자세히 입력한 항목은 'direct'가 된다
-  const items = ITEMS.map((def) => ({ ...def, value: values[def.key], u: UNCERTAINTY[def.key], basis: "estimate" }));
+// resolve()로 구한 양으로 계산. basis: 'estimate'(간편 입력 대표값) / 'direct'(자세히 입력한 값)
+export function calculateResolved(r) {
+  const values = itemValues(r);
+  const items = ITEMS.map((def) => {
+    const direct = r.direct.has(def.key);
+    return {
+      ...def,
+      value: values[def.key],
+      u: (direct ? UNCERTAINTY_DIRECT : UNCERTAINTY)[def.key],
+      basis: direct ? "direct" : "estimate",
+    };
+  });
   const byCategory = Object.fromEntries(
     CATEGORIES.map((c) => [c.key, withRange(items.filter((i) => i.category === c.key))])
   );
   return { items, byCategory, total: withRange(items) };
 }
+
+export const calculate = (answers, detail) => calculateResolved(resolve(answers, detail));
 
 // 입력으로 바꿀 수 있는 항목 중 가장 큰 것
 export const biggestItem = (result) =>

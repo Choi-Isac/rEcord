@@ -31,7 +31,6 @@ export default function Header() {
     <header className="site-header">
       <div className="wrap nav">
         <Link className="logo" to="/">
-          <span className="logo-mark" aria-hidden="true" />
           Ecord
         </Link>
 

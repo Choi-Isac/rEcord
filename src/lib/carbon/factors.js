@@ -17,7 +17,7 @@ export const EF = {
 // ── 이동 ──────────────────────────────────────
 
 export const COMMUTE = {
-  // 통학은 학기 중(16주 × 2학기)에만 한다고 본다. 방학 중 통학은 정밀 입력 항목
+  // 통학은 학기 중(16주 × 2학기)에만 한다고 본다. 방학 중 통학은 아직 다루지 않는다
   weeksPerYear: 32,
   // 문을 나서서 강의실에 닿기까지(걷기·환승·대기 포함) 평균 속도, km/h → 편도 시간을 거리로 환산
   speedKmh: { walk: 4.5, bike: 12, bus: 15, subway: 22, car: 25, taxi: 25, moto: 25 },
@@ -97,6 +97,57 @@ export const UNCERTAINTY = {
   clothes: 0.5,
   parcels: 0.4,
   disposables: 0.5,
+};
+
+// ── 자세히 입력 (v0.2) ─────────────────────────
+// 간편 입력의 대표값을 직접 입력한 값으로 바꿀 때 쓰는 계수. 기본값은 간편 입력 결과와 같아지도록 맞췄다.
+
+const KWH_PER_M3 = 10.4; // 도시가스 1m³로 내는 난방 열량을 전기로 낼 때의 kWh (보일러 효율 반영)
+
+export const DETAIL = {
+  kwhPerM3: KWH_PER_M3,
+  // 통학: 학기 8개월 동안 월 횟수 → 연간 횟수
+  semesterMonths: 8,
+  // 자가용 연료별 배출 배수 (휘발유 = COMMUTE.pkm.car)
+  carFuel: { gasoline: 1, diesel: 0.95, lpg: 0.9, hybrid: 0.6, ev: 0.35 },
+  // 본가·장거리 이동 수단별 1인 1km당 배출량
+  homeTripPkm: { mixed: HOME_TRIPS.pkm, train: 0.03, bus: 0.04, car: 0.19 },
+  // 항공 왕복 1회 거리(km) = FLIGHTS의 연간 거리 ÷ 간편 입력이 가정한 횟수
+  flightTripKm: { domestic: 900, asia: 5000, long: 18000 },
+  // 난방 방식별 '도시가스 m³ 환산량' 1단위당 배출량, kg
+  //   전기 난방: 1m³ 환산 × 10.4kWh × 전력 계수 / 지역·중앙난방: 열병합 평균으로 가스의 약 0.75배
+  heatingEf: { gas: EF.gas, electric: KWH_PER_M3 * EF.electricity, district: 0.75 * EF.gas, unknown: EF.gas },
+  // 냉난방 '보통'(간편 3단계)에 해당하는 사용 패턴: 하루 시간 × 사용 월수
+  coolRef: { hours: 6, months: 3 },
+  heatRef: { hours: 8, months: 4 },
+  // 요금(원) → 사용량 환산 단가 (누진·기본요금 포함 평균)
+  wonPerKwh: 160,
+  wonPerM3: 1100,
+  // 육류 1회(약 120g) 종류별 배출량, kg/회. 소 20%·돼지 45%·닭 35% 가중 평균이 FOOD.meatServing과 같다
+  meatServing: { beef: 3.9, pork: 1.2, chicken: 0.8, fish: 0.7 },
+  meatMix: { beef: 0.2, pork: 0.45, chicken: 0.35, fish: 0 },
+  // 식사 장소별 1끼에 더해지는 조리·운송 배출, kg/끼 (직접 조리 = 기본 식단에 포함)
+  mealOverhead: { campus: 0.05, out: FOOD.mealOverhead, delivery: FOOD.mealOverhead, convenience: 0.25, cook: 0 },
+  // 중고 구매 1개는 새 제품 생산 배출의 10%로 본다 (세탁·운송)
+  secondhandFactor: 0.1,
+  // 해외직구 1건(포장재 + 국제 운송, 항공·해상 평균), kg/건. 국내 택배(GOODS.parcel)의 2.5배
+  overseasParcel: 2,
+};
+
+// 자세히 입력으로 계산한 항목의 상대 불확도 (간편 입력보다 작다)
+export const UNCERTAINTY_DIRECT = {
+  commute: 0.15,
+  homeTrips: 0.25,
+  flights: 0.2,
+  electricity: 0.1,
+  cooling: 0.3,
+  heating: 0.25,
+  hotWater: 0.1,
+  meat: 0.2,
+  mealsOut: 0.3,
+  clothes: 0.3,
+  parcels: 0.2,
+  disposables: 0.3,
 };
 
 // 비교 기준: 1.5℃ 목표에 맞춘 2030년 1인당 생활 탄소발자국 (Hot or Cool Institute, 2021)

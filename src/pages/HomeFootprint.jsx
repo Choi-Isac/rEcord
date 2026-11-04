@@ -140,7 +140,7 @@ export default function HomeFootprint() {
             </ul>
             {last && (
               <Link className="fp-last" to={`/result/${last.id}`}>
-                지난 결과 {toTon(calculate(last.answers).total.value)}톤 ({formatDate(last.completedAt)}) 보기 →
+                지난 결과 {toTon(calculate(last.answers, last.detail).total.value)}톤 ({formatDate(last.completedAt)}) 보기 →
               </Link>
             )}
           </div>

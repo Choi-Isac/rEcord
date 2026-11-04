@@ -36,17 +36,20 @@ export default function StartPage() {
 
   return (
     <>
-      <PageHead title="탄소발자국 계산기" description="입력 방식을 고르고 시작해 보세요. 나중에 결과 화면에서 다시 고칠 수 있어요." />
+      <PageHead title="탄소발자국 계산기" description="생활 습관에 답하면 나의 연간 탄소발자국을 알려드려요. 나중에 결과 화면에서 다시 고칠 수 있어요." />
       <div className="wrap start">
-        <h2 className="sr-only">입력 방식 선택</h2>
+        <h2 className="sr-only">입력 방식</h2>
         <div className="mode-cards">
           <div className="card mode-card is-available">
             <div className="mode-top">
-              <span className="mode-time">약 1분</span>
+              <span className="mode-time">약 1분 · 자세히 입력하면 약 5분</span>
               <span className="badge-est">추정 범위로 결과 표시</span>
             </div>
             <h3>간편 입력</h3>
-            <p>칩을 고르고 슬라이더를 움직여 {QUESTIONS.length}개 항목에 빠르게 답해요.</p>
+            <p>
+              칩을 고르고 슬라이더를 움직여 {QUESTIONS.length}개 항목에 빠르게 답해요. 정확한 값을 알면 항목마다 '자세히 입력'을
+              펼쳐 넣을 수 있어요.
+            </p>
             <ul className="mode-cats">
               {CATEGORIES.map((c) => (
                 <li key={c.key}>
@@ -56,15 +59,6 @@ export default function StartPage() {
             </ul>
           </div>
 
-          <div className="card mode-card is-disabled" aria-disabled="true">
-            <div className="mode-top">
-              <span className="mode-time">15분 이상</span>
-              <span className="badge-soon">준비 중</span>
-            </div>
-            <h3>정밀 입력</h3>
-            <p>요일별 통학, 구간별 이동, 고지서 값, 가전·식재료까지 자세히 입력해 더 정확한 값을 얻어요.</p>
-            <p className="mode-later">파일럿 결과를 보고 다음 단계에서 열 예정이에요.</p>
-          </div>
         </div>
 
         <div className="card consent">
@@ -84,7 +78,7 @@ export default function StartPage() {
             </span>
           </label>
           <p className="consent-note">
-            응답은 이 브라우저에 저장돼요. 통계·연구 활용에 동의하면 입력값·피드백·지역·대학·학과가 이름 없이 서버에도 저장되고, 동의하지 않으면 외부로 보내지 않아요.
+            응답은 이 브라우저에 저장돼요. 통계·연구 활용에 동의하면 입력값·피드백·거주 지역이 이름 없이 서버에도 저장되고, 동의하지 않으면 외부로 보내지 않아요.
           </p>
 
           {prefill && (

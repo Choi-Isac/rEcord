@@ -5,6 +5,7 @@ import Question from "../components/Question.jsx";
 import { CATEGORIES, calculate, commuteKm } from "../lib/carbon/engine.js";
 import { HOUSING } from "../lib/carbon/factors.js";
 import { QUESTIONS, isAnswered, isSkipped, missingRequired, optionLabel } from "../lib/carbon/questions.js";
+import { canExpand, fillBlank, syncSimple } from "../lib/carbon/details.js";
 import { answeredCount, useDraft } from "../lib/draft.js";
 import { createResponse, useResponses } from "../lib/responses.js";
 import { num, toTon } from "../lib/format.js";
@@ -79,11 +80,13 @@ export default function SimpleInputPage() {
   if (!draft?.consent?.service) return finished.current ? null : <Navigate to="/calculator" replace />;
 
   const { answers, touched } = draft;
+  const detail = draft.detail ?? {};
+  const detailOpen = draft.detailOpen ?? [];
   const step = draft.step ?? 0;
   const current = STEPS[step];
   const isLast = step === STEPS.length - 1;
-  const result = calculate(answers);
-  const missing = missingRequired(answers);
+  const result = calculate(answers, detail);
+  const missing = missingRequired(answers, detail);
   const missingHere = missing.filter((q) => q.category === current.key);
 
   // key: 바꿀 답변, qid: 직접 조작한 문항(냉난방은 슬라이더 2개가 한 문항)
@@ -92,8 +95,38 @@ export default function SimpleInputPage() {
       const next = { ...d.answers, [key]: value };
       // 거주 형태를 고르면, 동거 인원을 직접 고르기 전까지는 그 형태의 기본 인원으로 맞춘다
       if (key === "housing" && !d.touched.includes("household")) next.household = HOUSING[value].defaultHousehold;
-      return { ...d, answers: next, touched: d.touched.includes(qid) ? d.touched : [...d.touched, qid] };
+      // 자세히 입력한 문항의 간편 칸은 자세히 입력값을 따른다 (예: 수단을 바꾸면 거리로 구한 통학 시간도 다시 구함)
+      return { ...d, answers: syncSimple(next, d.detail), touched: d.touched.includes(qid) ? d.touched : [...d.touched, qid] };
     });
+
+  // 자세히 입력: 펼치기/접기, 값 바꾸기(처음 바꿀 때 기본값과 함께 저장), 비운 칸 되돌리기, 간편 입력으로 되돌리기
+  const setOpen = (ids, open) =>
+    setDraft((d) => {
+      const was = d.detailOpen ?? [];
+      return {
+        ...d,
+        detailOpen: open ? [...new Set([...was, ...ids])] : was.filter((x) => !ids.includes(x)),
+        detailOpened: open ? [...new Set([...(d.detailOpened ?? []), ...ids])] : d.detailOpened ?? [],
+      };
+    });
+  // 되돌려도 간편 칸은 마지막으로 반영된 값에 머문다
+  const setDetail = (qid, values) =>
+    setDraft((d) => {
+      const next = { ...(d.detail ?? {}) };
+      if (values) next[qid] = values;
+      else delete next[qid];
+      return { ...d, detail: next, answers: syncSimple(d.answers, next) };
+    });
+  const detailPropsFor = (q) => ({
+    detail: detail[q.id],
+    open: detailOpen.includes(q.id),
+    onToggle: () => setOpen([q.id], !detailOpen.includes(q.id)),
+    onReset: () => setDetail(q.id, null),
+    onDetailChange: (values) => setDetail(q.id, values),
+    onDetailCommit: () => detail[q.id] && setDetail(q.id, fillBlank(q, answers, detail[q.id])),
+  });
+  const expandableHere = current.questions.filter((q) => !isSkipped(q, answers, detail) && canExpand(q, answers)).map((q) => q.id);
+  const allOpenHere = expandableHere.length > 0 && expandableHere.every((id) => detailOpen.includes(id));
 
   const goTo = (i) => {
     setShowMissing(false);
@@ -120,7 +153,11 @@ export default function SimpleInputPage() {
       if (target !== step) setDraft((d) => ({ ...d, step: target }));
       return flagMissing(missing[0]);
     }
-    const record = createResponse(draft);
+    // 건너뛴 문항(통학 0일의 시간·수단)의 자세히 입력은 저장하지 않는다
+    const kept = Object.fromEntries(
+      Object.entries(detail).filter(([id]) => !isSkipped(QUESTIONS.find((q) => q.id === id), answers, detail))
+    );
+    const record = createResponse({ ...draft, detail: kept, detailOpened: draft.detailOpened ?? [] });
     finished.current = true;
     add(record);
     setDraft(null);
@@ -135,23 +172,14 @@ export default function SimpleInputPage() {
     <>
       <PageHead
         title="간편 입력"
-        description="생활 습관에 가장 가까운 것을 골라 주세요. 정확하지 않아도 괜찮아요."
+        description="생활 습관에 가장 가까운 것을 골라 주세요. 정확한 값을 알면 항목마다 '자세히 입력'을 펼쳐 넣을 수 있어요."
         crumbs={[{ to: "/calculator", label: "탄소발자국 계산기" }]}
       />
       <div className="wrap calc-layout">
         <div className="calc-main">
-          <div className="mode-tabs" role="tablist" aria-label="입력 방식">
-            <button role="tab" aria-selected="true" className="mode-tab">
-              간편 입력
-            </button>
-            <button role="tab" aria-selected="false" className="mode-tab" disabled title="준비 중">
-              정밀 입력 <span className="badge-soon">준비 중</span>
-            </button>
-          </div>
-
           <ol className="stepper" aria-label="입력 단계">
             {STEPS.map((s, i) => {
-              const done = s.questions.filter((q) => isAnswered(q, answers, touched)).length;
+              const done = s.questions.filter((q) => isAnswered(q, answers, touched, detail)).length;
               const complete = !missing.some((q) => q.category === s.key);
               const state = i === step ? "is-current" : complete && done > 0 ? "is-done" : "";
               return (
@@ -180,6 +208,11 @@ export default function SimpleInputPage() {
                 <h2 id="step-title">{current.label}</h2>
                 <p>{current.desc}</p>
               </div>
+              {expandableHere.length > 0 && (
+                <button type="button" className="detail-all" onClick={() => setOpen(expandableHere, !allOpenHere)}>
+                  {allOpenHere ? "자세히 입력 모두 접기" : "이 단계 모두 자세히 입력"}
+                </button>
+              )}
             </div>
 
             {current.questions.map((q) => (
@@ -189,10 +222,11 @@ export default function SimpleInputPage() {
                 index={QUESTIONS.indexOf(q) + 1}
                 answers={answers}
                 touched={touched}
-                skipped={isSkipped(q, answers)}
+                skipped={isSkipped(q, answers, detail)}
                 missing={showMissing && missing.includes(q)}
                 hint={derivedHint(q, answers, touched)}
                 onChange={setAnswer}
+                detailProps={detailPropsFor(q)}
               />
             ))}
           </section>

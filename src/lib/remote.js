@@ -11,7 +11,7 @@ async function insert(table, row) {
 }
 
 const blankToNull = (v) => (v ? v : null);
-const profileKey = (p) => JSON.stringify([p.region, p.university, p.department]);
+const profileKey = (p) => JSON.stringify([p.region]);
 
 const responseRow = (r) => ({
   id: r.id,
@@ -26,15 +26,17 @@ const responseRow = (r) => ({
   consent_research: r.consent.research,
   consent_at: r.consent.agreedAt ?? r.startedAt,
   region: blankToNull(r.profile.region),
-  university: blankToNull(r.profile.university),
-  department: blankToNull(r.profile.department),
 });
 
-const answersRow = ({ id, answers: a, defaultsUsed }) => ({
+// 자세히 입력: 값과 펼쳐 본 문항을 detail 열(jsonb)에 함께 담는다. 펼쳐 보지도 않았으면 NULL
+const detailColumn = ({ detail = {}, detailOpened = [] }) =>
+  Object.keys(detail).length || detailOpened.length ? { values: detail, opened: detailOpened } : null;
+
+const answersRow = ({ id, answers: a, defaultsUsed, ...record }) => ({
   response_id: id,
   commute_days: a.commuteDays,
   commute_minutes: a.commuteMinutes,
-  commute_mode: a.commuteDays === 0 ? null : a.commuteMode,
+  commute_mode: a.commuteMode ?? null, // 통학하지 않으면 고르지 않아 NULL
   home_trips: a.homeTrips,
   flights: a.flights,
   housing: a.housing,
@@ -47,6 +49,9 @@ const answersRow = ({ id, answers: a, defaultsUsed }) => ({
   parcels: a.parcels,
   reusable: a.reusable,
   defaults_used: defaultsUsed,
+  parcels_domestic: record.detail?.parcels?.domestic ?? null,
+  parcels_overseas: record.detail?.parcels?.overseas ?? null,
+  detail: detailColumn(record),
 });
 
 const feedbackRow = (id, f) => ({
@@ -85,12 +90,10 @@ export async function syncRecord(record) {
     Object.assign(done, { response: true, profile });
   }
   if (done.profile !== profile) {
-    const ok = await step("지역·대학·학과", async () => {
+    const ok = await step("거주 지역", async () => {
       const { error } = await supabase.rpc("set_profile", {
         p_id: record.id,
         p_region: record.profile.region,
-        p_university: record.profile.university,
-        p_department: record.profile.department,
       });
       if (error) throw error;
     });

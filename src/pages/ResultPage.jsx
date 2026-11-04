@@ -54,7 +54,7 @@ const FEEDBACK_QS = [
   { id: "understand", label: "결과가 잘 이해되었나요?", options: LIKERT, ends: ["전혀", "매우 잘"] },
   { id: "trust", label: "결과를 얼마나 믿을 수 있나요?", options: LIKERT, ends: ["전혀", "매우"] },
   { id: "intent", label: "제안된 행동 중 하나라도 해 볼 생각이 있나요?", options: INTENT },
-  { id: "revisit", label: "다음 학기에 다시 측정해 볼 생각이 있나요?", options: INTENT },
+  { id: "revisit", label: "다음 번에 다시 측정해 볼 생각이 있나요?", options: INTENT },
 ];
 
 function Feedback({ record, onSubmit }) {
@@ -120,14 +120,6 @@ function Profile({ record, onChange }) {
             ))}
           </select>
         </label>
-        <label>
-          <span>대학 (선택)</span>
-          <input className="input" value={profile.university} onChange={set("university")} placeholder="예: 고려대학교" />
-        </label>
-        <label>
-          <span>학과 (선택)</span>
-          <input className="input" value={profile.department} onChange={set("department")} placeholder="예: 환경생태공학부" />
-        </label>
       </div>
       {programs.length > 0 && (
         <ul className="programs">
@@ -155,7 +147,7 @@ export default function ResultPage() {
   const idx = id ? responses.findIndex((r) => r.id === id) : responses.length - 1;
   const record = responses[idx];
 
-  // 연구 활용에 동의한 응답은 서버에도 보낸다. 지역·학과를 입력하는 동안에는 기다렸다가 한 번에 보낸다
+  // 연구 활용에 동의한 응답은 서버에도 보낸다. 지역을 바꾸는 동안에는 기다렸다가 한 번에 보낸다
   useEffect(() => {
     if (!record || !shouldSync(record)) return;
     const timer = setTimeout(async () => {
@@ -184,17 +176,21 @@ export default function ResultPage() {
 
   const previous = idx > 0 ? responses[idx - 1] : null;
   // 저장된 원본 입력값으로 현재 배출계수에 맞춰 다시 계산한다
-  const result = calculate(record.answers);
-  const prevTotal = previous ? calculate(previous.answers).total.value : null;
+  const detail = record.detail ?? {};
+  const result = calculate(record.answers, detail);
+  const prevTotal = previous ? calculate(previous.answers, previous.detail).total.value : null;
   const { total, byCategory, items } = result;
   const biggest = biggestItem(result);
-  const suggestions = suggest(record.answers, { focusItem: biggest.key });
+  const suggestions = suggest(record.answers, { detail, focusItem: biggest.key });
+  // 자세히 입력이 있으면 간편 입력만으로 계산한 값과 비교한다 (README 가설 2)
+  const directCount = items.filter((i) => i.basis === "direct").length;
+  const simpleTotal = directCount ? calculate(record.answers).total.value : null;
   const savingSum = suggestions.reduce((s, x) => s + x.saving, 0);
   const vsRef = ((total.value - REFERENCE) / REFERENCE) * 100;
 
   const edit = () => {
     const touched = QUESTIONS.filter((q) => !answerKeys(q).some((k) => record.defaultsUsed.includes(k))).map((q) => q.id);
-    setDraft(newDraft(record.consent, record.answers, touched));
+    setDraft(newDraft(record.consent, record.answers, touched, detail));
     navigate("/calculator/simple");
   };
 
@@ -211,6 +207,7 @@ export default function ResultPage() {
       value: i.value,
       color: i.fixed ? "var(--viz-reference)" : CAT_COLORS[i.category],
       highlight: i.key === biggest.key,
+      tag: i.basis === "direct" ? "직접 입력" : null,
     }));
   const itemLabel = (key) => items.find((i) => i.key === key).label;
 
@@ -218,7 +215,7 @@ export default function ResultPage() {
     <>
       <PageHead
         title="나의 탄소발자국"
-        description={`${formatDate(record.completedAt)} 간편 입력 결과 · 입력 시간 ${formatDuration(record.durationSec)}`}
+        description={`${formatDate(record.completedAt)} ${directCount ? "간편 + 자세히 입력" : "간편 입력"} 결과 · 입력 시간 ${formatDuration(record.durationSec)}`}
         crumbs={[{ to: "/calculator", label: "탄소발자국 계산기" }]}
       />
       <div className="wrap result">
@@ -227,6 +224,11 @@ export default function ResultPage() {
           <div className="hero-main">
             <h2 id="total-title" className="hero-label">
               나의 연간 탄소발자국 <span className="badge-est" title="간편 입력의 대표값으로 계산한 추정값">추정</span>
+              {directCount > 0 && (
+                <span className="badge-direct" title="자세히 입력한 값으로 계산한 항목이 있어요">
+                  {directCount}개 항목 직접 입력
+                </span>
+              )}
             </h2>
             <div className="hero-value">
               {toTon(total.value)}
@@ -237,6 +239,16 @@ export default function ResultPage() {
             </p>
             <RangeScale total={total} />
             <ul className="hero-compare">
+              {simpleTotal !== null && (
+                <li>
+                  간편 입력만으로 계산하면 {toTon(simpleTotal)}톤 → 자세히 입력을 반영해{" "}
+                  <strong>
+                    {Math.abs(total.value - simpleTotal) < 50
+                      ? "거의 같아요"
+                      : `${toTon(Math.abs(total.value - simpleTotal))}톤 ${total.value < simpleTotal ? "줄었어요" : "늘었어요"}`}
+                  </strong>
+                </li>
+              )}
               <li>
                 기준 예시(가상의 대학생) {toTon(REFERENCE)}톤보다{" "}
                 <strong className={vsRef <= 0 ? "delta-good" : "delta-bad"}>
@@ -293,10 +305,15 @@ export default function ResultPage() {
 
           <ChartCard
             title="항목별 배출량"
-            subtitle="큰 순서 · 색은 영역"
+            subtitle={directCount ? "큰 순서 · 색은 영역 · ✓는 자세히 입력한 항목" : "큰 순서 · 색은 영역"}
             table={{
-              columns: ["항목", "영역", "추정 (kg)"],
-              rows: rankedItems.map((i) => [itemName(i), catLabel(i.category), roundKg(i.value)]),
+              columns: ["항목", "영역", "배출량 (kg)", "입력"],
+              rows: rankedItems.map((i) => [
+                itemName(i),
+                catLabel(i.category),
+                roundKg(i.value),
+                i.basis === "direct" ? "직접 입력" : "추정",
+              ]),
             }}
           >
             <HBarChart items={shownItems} unit="kg" format={roundKg} />

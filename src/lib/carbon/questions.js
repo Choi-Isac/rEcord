@@ -9,7 +9,8 @@ export const COMMUTE_MINUTE_STEPS = [
 
 export const CLIMATE_LEVELS = ["아주 적게", "적게", "보통", "많이", "아주 많이"];
 
-const noCommute = (a) => a.commuteDays === 0;
+// 통학 일수는 자세히 입력(요일 선택)이 있으면 그 요일 수를 따른다
+const noCommute = (a, d) => (d?.commuteDays ? d.commuteDays.days.length : a.commuteDays) === 0;
 
 export const QUESTIONS = [
   // ── 이동
@@ -192,13 +193,14 @@ export const answerKeys = (q) => (q.type === "dual" ? q.sliders.map((s) => s.id)
 export const emptyAnswers = () =>
   Object.fromEntries(QUESTIONS.flatMap((q) => answerKeys(q).map((k) => [k, q.type === "chips" ? null : q.default])));
 
-export const isSkipped = (q, answers) => Boolean(q.skipWhen?.(answers));
+export const isSkipped = (q, answers, detail) => Boolean(q.skipWhen?.(answers, detail));
 
-// 칩은 골랐을 때, 슬라이더는 직접 움직였을 때 답한 것으로 센다
-export const isAnswered = (q, answers, touched) =>
-  isSkipped(q, answers) || (q.type === "chips" ? answers[q.id] != null : touched.includes(q.id));
+// 칩은 골랐을 때, 슬라이더는 직접 움직였거나 자세히 입력했을 때 답한 것으로 센다
+export const isAnswered = (q, answers, touched, detail) =>
+  isSkipped(q, answers, detail) ||
+  (q.type === "chips" ? answers[q.id] != null : touched.includes(q.id) || Boolean(detail?.[q.id]));
 
-export const missingRequired = (answers) =>
-  QUESTIONS.filter((q) => q.type === "chips" && !isSkipped(q, answers) && answers[q.id] == null);
+export const missingRequired = (answers, detail) =>
+  QUESTIONS.filter((q) => q.type === "chips" && !isSkipped(q, answers, detail) && answers[q.id] == null);
 
 export const optionLabel = (id, value) => QUESTIONS.find((q) => q.id === id)?.options?.find((o) => o.value === value)?.label;
