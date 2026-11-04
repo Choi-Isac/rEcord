@@ -1,0 +1,166 @@
+/* ── 시작 화면 ───────────────────────────── */
+.start { display: grid; gap: 16px; max-width: 880px; }
+.mode-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.mode-card { padding: 24px 26px; }
+.mode-card h3 { margin: 10px 0 6px; font-size: 22px; letter-spacing: -.02em; }
+.mode-card p { margin: 0 0 14px; color: var(--ink-2); font-size: 15px; }
+.mode-card.is-available { border: 2px solid var(--accent); }
+.mode-card.is-disabled { background: #f6f4ef; color: var(--ink-3); }
+.mode-card.is-disabled h3 { color: var(--ink-2); }
+.mode-card .mode-later { font-size: 13px; color: var(--ink-3); margin: 0; }
+.mode-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mode-time { font-size: 13px; font-weight: 700; color: var(--accent); }
+.is-disabled .mode-time { color: var(--ink-3); }
+.mode-cats { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0; }
+.mode-cats li { background: var(--bg); padding: 5px 11px; border-radius: 99px; font-size: 13px; font-weight: 600; }
+
+.consent { padding: 24px 26px; display: grid; gap: 12px; }
+.consent h3 { margin: 0; font-size: 18px; }
+.consent-note { margin: 0; font-size: 13px; color: var(--ink-3); }
+.consent-hint { margin: -4px 0 0; font-size: 13px; color: var(--ink-3); }
+.start-actions { display: flex; flex-wrap: wrap; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 4px; }
+
+/* ── 간편 입력 ───────────────────────────── */
+.calc-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+.calc-main { min-width: 0; }
+
+.mode-tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 14px; }
+.mode-tab {
+  display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 8px 16px;
+  border-radius: 9px; font-size: 14px; font-weight: 700; color: var(--ink-2); cursor: pointer;
+}
+.mode-tab[aria-selected="true"] { background: var(--accent); color: #fff; }
+.mode-tab:disabled { cursor: not-allowed; color: var(--ink-3); }
+
+/* 단계 표시: 누르면 해당 영역 화면으로 이동 */
+.stepper { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0 0 8px; }
+.stepper li { flex: 1; min-width: 0; }
+.stepper button {
+  width: 100%; display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--ink-3); cursor: pointer;
+}
+.stepper button:hover { border-color: var(--ink-3); }
+.stepper-num {
+  width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--line); color: var(--ink-2); font-size: 12px; flex: none;
+}
+.stepper-label { white-space: nowrap; }
+.stepper small { margin-left: auto; font-size: 12px; font-variant-numeric: tabular-nums; }
+.stepper .is-current button { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.stepper .is-current .stepper-num { background: var(--accent); color: #fff; }
+.stepper .is-done button { color: var(--ink-2); }
+.stepper .is-done .stepper-num { background: var(--green); color: #fff; }
+
+.q-section { padding-top: 18px; }
+.q-section-head { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; }
+.q-section-icon { width: 48px; height: 48px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; font-size: 24px; flex: none; }
+.q-section-head h2 { margin: 0; font-size: 24px; letter-spacing: -.02em; line-height: 1.3; }
+.q-section-head p { margin: 0; font-size: 14px; color: var(--ink-2); }
+.q-section-head .step-count { font-size: 12px; font-weight: 700; color: var(--accent); }
+
+.step-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
+
+.q { padding: 20px 22px; margin-bottom: 10px; scroll-margin-top: 90px; transition: border-color .15s; }
+.q.is-missing { border-color: var(--bad); box-shadow: 0 0 0 3px rgba(184, 69, 26, .12); }
+.q.is-skipped { background: #f6f4ef; }
+.q.is-skipped .q-label { color: var(--ink-3); }
+.q-head { display: flex; gap: 12px; margin-bottom: 14px; }
+.q-num {
+  width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+  font-size: 12px; font-weight: 800; display: grid; place-items: center; flex: none; margin-top: 1px;
+}
+.q-label { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+.q-hint { margin: 2px 0 0; font-size: 13px; color: var(--ink-3); }
+.q-skip { margin: -4px 0 0 36px; font-size: 14px; color: var(--ink-3); }
+.q-derived { margin: 10px 0 0; font-size: 13px; color: var(--green); font-weight: 600; }
+.q-missing { margin: 10px 0 0; font-size: 13px; color: var(--bad); font-weight: 700; }
+
+/* 칩 */
+.chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.chip-opt {
+  position: relative; display: flex; align-items: center; gap: 8px; padding: 11px 12px;
+  border: 1px solid var(--line); border-radius: 12px; cursor: pointer; background: var(--surface);
+  font-size: 14px; font-weight: 600; color: var(--ink-2); transition: border-color .12s, background .12s;
+}
+.chip-opt:hover { border-color: var(--ink-3); }
+.chip-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.chip-opt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip-opt.is-selected { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.chip-icon { font-size: 20px; line-height: 1; }
+.chip-text { display: flex; flex-direction: column; line-height: 1.3; }
+.chip-text small { font-size: 11px; font-weight: 500; color: var(--ink-3); }
+
+/* 슬라이더 */
+.slider-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 2px; }
+.slider-head label { font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.slider-value { font-size: 18px; font-weight: 800; color: var(--accent); display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+.default-tag { font-size: 11px; font-weight: 700; color: var(--ink-3); background: var(--bg); border: 1px solid var(--line); border-radius: 99px; padding: 1px 7px; }
+.range { width: 100%; accent-color: var(--accent); height: 28px; margin: 0; cursor: pointer; }
+.range-scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-3); }
+.dual { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+/* 실시간 요약 */
+.live { position: sticky; top: 84px; padding: 22px; }
+.live-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.live-value { font-size: 38px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; margin-top: 4px; }
+.live-value small { font-size: 15px; font-weight: 600; color: var(--ink-2); margin-left: 4px; }
+.live-range { font-size: 13px; color: var(--ink-3); margin-bottom: 14px; }
+.live-list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 7px; }
+.live-list li { display: grid; grid-template-columns: 14px 1fr auto; align-items: center; gap: 8px; font-size: 14px; }
+.live-list li span { color: var(--ink-2); }
+.live-list strong { font-variant-numeric: tabular-nums; }
+.progress { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--green); border-radius: 99px; transition: width .2s; }
+.live-progress { margin: 6px 0 12px; font-size: 13px; color: var(--ink-2); }
+.live-note { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); }
+.key { display: inline-block; flex: none; }
+.key-rect { width: 10px; height: 10px; border-radius: 3px; }
+
+@media (max-width: 900px) {
+  .calc-layout { grid-template-columns: 1fr; }
+  /* 모바일에선 합계와 버튼만 화면 아래에 붙여 둔다 */
+  .live {
+    position: sticky; bottom: 0; top: auto; z-index: 10; padding: 12px 16px; border-radius: 14px 14px 0 0;
+    display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px;
+    box-shadow: 0 -6px 20px rgba(0, 0, 0, .08); margin: 0 -20px;
+  }
+  .live-list, .live-note, .live-range { display: none; }
+  .live-label { grid-column: 1; }
+  .live-value { grid-column: 1; font-size: 24px; margin: 0; }
+  .live .progress { grid-column: 1 / -1; grid-row: 3; }
+  .live-progress { grid-column: 1 / -1; grid-row: 4; margin: 0; font-size: 12px; }
+  .live .btn { grid-column: 2; grid-row: 1 / 3; width: auto; }
+  /* 다음 버튼은 화면 아래 고정 바에 있으므로 본문에서는 이전 버튼만 */
+  .step-next { display: none; }
+}
+@media (max-width: 640px) {
+  .mode-cards { grid-template-columns: 1fr; }
+  .mode-card, .consent { padding: 20px; }
+  .q { padding: 18px 16px; }
+  .chips { grid-template-columns: repeat(2, 1fr); }
+  .dual { grid-template-columns: 1fr; gap: 14px; }
+  /* 좁은 화면: 현재 단계만 이름을 보여 주고 나머지는 번호만 */
+  .stepper button { justify-content: center; padding: 8px 4px; gap: 0; }
+  .stepper-label, .stepper small { display: none; }
+  .stepper .is-current button { gap: 6px; }
+  .stepper .is-current .stepper-label { display: inline; }
+}
+
+.prefill-note { margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--green-soft); font-size: 14px; color: var(--green); font-weight: 600; }
+.prefill-note .link-btn { font-size: 13px; color: var(--green); }
+
+/* ── 테마별 마감 (메인 화면 디자인과 같은 느낌) ── */
+/* 발자국: 메인 미리보기처럼 둥근 알약형 칩, 고르면 초록으로 채움 */
+[data-theme="footprint"] .chip-opt { border-radius: 99px; padding: 9px 14px; }
+[data-theme="footprint"] .chip-opt.is-selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+[data-theme="footprint"] .chip-opt.is-selected .chip-text small { color: rgba(255,255,255,.8); }
+[data-theme="footprint"] .mode-card.is-available,
+[data-theme="footprint"] .live { box-shadow: 0 18px 48px rgba(31, 60, 45, .08); }
+
+/* 인포그래픽: 짙은 초록 채움과 굵은 숫자 */
+[data-theme="story"] .chip-opt.is-selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+[data-theme="story"] .chip-opt.is-selected .chip-text small { color: rgba(255,255,255,.75); }
+[data-theme="story"] .q-num { background: var(--accent); color: #fff; }
+/* 실시간 패널은 영역 색(밝은 배경에서 검증된 팔레트) 때문에 밝게 두고 윗변만 강조 */
+[data-theme="story"] .live { border-top: 4px solid var(--accent); }
+[data-theme="story"] .live-value { color: var(--accent-dark); }

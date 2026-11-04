@@ -1,0 +1,34 @@
+.method { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 24px; align-items: start; }
+.m-toc { position: sticky; top: 88px; display: grid; gap: 2px; }
+.m-toc a { padding: 7px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.m-toc a:hover { background: var(--accent-soft); color: var(--accent); }
+
+.m-body { display: grid; gap: 14px; }
+.m-sec { padding: 26px 30px; scroll-margin-top: 84px; }
+.m-sec h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: -.02em; }
+.m-sec h3 { margin: 22px 0 8px; font-size: 16px; }
+.m-sec p { margin: 0 0 12px; font-size: 15px; color: var(--ink-2); }
+.m-sec p strong { color: var(--ink); }
+.m-small { font-size: 13px !important; color: var(--ink-3) !important; }
+
+.formula {
+  margin: 0 0 12px; padding: 12px 16px; border-radius: 10px; background: var(--bg);
+  border-left: 3px solid var(--accent); font-size: 14px; font-weight: 600; line-height: 1.6;
+}
+
+.m-table-wrap { overflow-x: auto; margin: 0 0 12px; }
+.m-table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.m-table th, .m-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.m-table th:first-child, .m-table td:first-child { text-align: left; }
+.m-table th { font-size: 12px; color: var(--ink-3); font-weight: 700; }
+
+.m-list { margin: 0 0 14px; padding-left: 20px; font-size: 15px; color: var(--ink-2); display: grid; gap: 4px; }
+
+@media (max-width: 900px) {
+  .method { grid-template-columns: 1fr; }
+  .m-toc { position: static; display: flex; flex-wrap: wrap; gap: 4px; }
+  .m-toc a { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; }
+}
+@media (max-width: 640px) {
+  .m-sec { padding: 20px 18px; }
+}

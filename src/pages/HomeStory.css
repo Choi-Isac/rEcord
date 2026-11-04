@@ -1,0 +1,105 @@
+/* 메인 디자인 '인포그래픽' — 짙은 초록 첫 화면 + 번호를 따라 읽는 데이터 이야기 */
+.st-hero {
+  background:
+    radial-gradient(circle at 85% 20%, rgba(255,255,255,.06) 0 180px, transparent 181px),
+    linear-gradient(160deg, #123326 0%, #1d4a37 70%, #24563f 100%);
+  color: #fff;
+  padding: 60px 0 52px;
+}
+.st-kicker { margin: 0; font-size: 18px; font-weight: 600; opacity: .85; }
+.st-big { font-size: 112px; font-weight: 800; letter-spacing: -.05em; line-height: 1; margin: 6px 0 10px; }
+.st-big span { font-size: 26px; font-weight: 700; letter-spacing: -.01em; margin-left: 10px; opacity: .85; }
+.st-sub { margin: 0; font-size: 15px; opacity: .85; max-width: 640px; }
+.st-sub .badge-est { opacity: 1; }
+
+.st-scale { margin: 46px 0 8px; max-width: 720px; }
+.st-scale-track { position: relative; height: 14px; border-radius: 99px; background: rgba(255,255,255,.14); }
+.st-scale-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; background: #fff; }
+.st-scale-mark { position: absolute; top: -8px; bottom: -8px; width: 2px; background: #ffd66b; }
+.st-scale-mark span { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; font-weight: 700; color: #ffd66b; }
+.st-scale-axis { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; opacity: .65; }
+
+.st-hero-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 28px; font-size: 14px; }
+.st-hero-actions > span { opacity: .75; }
+.st-btn { background: #fff; color: #123326; }
+.st-btn:hover { background: #e6f0ea; }
+
+/* 본문 공통 */
+.st-num { margin: 0; font-size: 14px; font-weight: 800; color: var(--green); letter-spacing: .08em; }
+.st h2 { margin: 2px 0 8px; font-size: 28px; letter-spacing: -.03em; }
+.st-text { margin: 0 0 20px; font-size: 15px; color: var(--ink-2); max-width: 620px; }
+.st-text strong { color: var(--ink); }
+
+.st-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.st-card { padding: 22px; margin-top: 30px; }
+.st-card h3 { margin: 0; font-size: 17px; }
+.st-card-sub { margin: 2px 0 12px; font-size: 13px; color: var(--ink-3); }
+
+/* 와플 */
+.st-waffle-wrap { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; }
+.st-waffle { display: grid; grid-template-columns: repeat(10, 18px); gap: 3px; }
+.st-waffle span { width: 18px; height: 18px; border-radius: 4px; transition: opacity .12s; }
+.st-waffle.has-active span:not(.is-active) { opacity: .2; }
+.st-waffle-legend { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.st-waffle-legend button {
+  width: 100%; display: grid; grid-template-columns: 10px 1fr auto auto; align-items: center; gap: 8px;
+  padding: 6px 8px; border: 0; border-radius: 8px; background: none; font-size: 14px; text-align: left; cursor: default;
+}
+.st-waffle-legend button.is-active { background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.st-waffle-legend i { width: 10px; height: 10px; border-radius: 3px; }
+.st-lg-name { color: var(--ink-2); }
+.st-waffle-legend strong { font-variant-numeric: tabular-nums; }
+.st-lg-kg { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+
+/* 1톤 환산 */
+.st-equiv { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+.st-eq { padding: 22px 20px; border-left: 1px solid var(--line); }
+.st-eq:first-child { border-left: 0; }
+.st-eq-icon { font-size: 28px; }
+.st-eq-value { font-size: 38px; font-weight: 800; letter-spacing: -.03em; margin-top: 6px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.st-eq-value small { font-size: 16px; font-weight: 700; margin-left: 3px; color: var(--ink-2); letter-spacing: 0; }
+.st-eq p { margin: 4px 0 0; font-size: 14px; color: var(--ink-2); }
+
+/* 선택 비교 */
+.st-choice-legend { margin-bottom: 12px; }
+.st-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.st-choice { padding: 20px 22px; }
+.st-choice-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.st-choice h3 { margin: 0; font-size: 18px; }
+.st-diff { font-size: 14px; color: var(--ink-2); }
+.st-diff strong { color: var(--ink); font-size: 17px; }
+.st-bar-row { display: grid; grid-template-columns: 124px 1fr; gap: 10px; align-items: center; padding: 4px 0; font-size: 14px; }
+.st-bar-label { color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-bar-track { display: flex; align-items: center; gap: 8px; padding-right: 64px; }
+.st-bar { display: block; height: 16px; min-width: 2px; border-radius: 0 4px 4px 0; }
+.st-bar-value { font-size: 13px; font-weight: 700; white-space: nowrap; margin-right: -64px; font-variant-numeric: tabular-nums; }
+.st-choice-note { margin: 8px 0 0; font-size: 12px; color: var(--ink-3); }
+
+.st-cta {
+  display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-top: 20px;
+  padding: 30px 34px; border-radius: var(--radius); background: #123326; color: #fff;
+}
+.st-cta h2 { margin: 0 0 6px; font-size: 24px; }
+.st-cta p { margin: 0; opacity: .82; font-size: 15px; max-width: 560px; }
+.st-cta a:not(.btn) { color: #ffd66b; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 960px) {
+  .st-split { grid-template-columns: 1fr; }
+  .st-card { margin-top: 0; }
+  .st-equiv { grid-template-columns: 1fr 1fr; }
+  .st-eq:nth-child(3) { border-left: 0; }
+  .st-eq:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 640px) {
+  .st-hero { padding: 40px 0 36px; }
+  .st-big { font-size: 76px; }
+  .st-big span { font-size: 18px; }
+  .st h2 { font-size: 23px; }
+  .st-waffle-wrap { grid-template-columns: 1fr; }
+  .st-waffle { grid-template-columns: repeat(10, 1fr); }
+  .st-waffle span { width: auto; height: auto; aspect-ratio: 1; }
+  .st-choices { grid-template-columns: 1fr; }
+  .st-bar-row { grid-template-columns: 96px 1fr; }
+  .st-cta { flex-direction: column; align-items: flex-start; padding: 24px 22px; }
+  .st-eq-value { font-size: 30px; }
+}

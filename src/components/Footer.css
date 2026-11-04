@@ -1,0 +1,16 @@
+.site-footer {
+  margin-top: 56px; padding: 40px 0 56px;
+  border-top: 1px solid var(--line); background: var(--surface);
+  font-size: 14px; color: var(--ink-2);
+}
+.footer-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 24px; }
+.footer-logo { font-weight: 800; font-size: 16px; color: var(--ink); margin-bottom: 6px; }
+.site-footer p { margin: 0 0 4px; }
+.footer-note { color: var(--ink-3); font-size: 13px; }
+.footer-label { font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.site-footer a { display: block; padding: 3px 0; }
+.site-footer a:hover { color: var(--accent); }
+
+@media (max-width: 640px) {
+  .footer-grid { grid-template-columns: 1fr; }
+}

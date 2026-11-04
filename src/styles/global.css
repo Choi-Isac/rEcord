@@ -1,0 +1,190 @@
+/* KU Climate 홈페이지(../Homepage)와 같은 디자인 토큰을 쓴다 */
+:root {
+  --crimson: #8a1538;
+  --crimson-dark: #6f1029;
+  --crimson-soft: #f6e8ec;
+  --green: #2f6b4f;
+  --green-soft: #e6f0ea;
+  --bg: #faf8f4;
+  --surface: #ffffff;
+  --ink: #1d1d1f;
+  --ink-2: #55565b;
+  --ink-3: #85868b;
+  --line: #e8e4dc;
+  --radius: 14px;
+
+  /* 차트 (Homepage에서 dataviz 검증을 통과한 팔레트) */
+  --viz-accent: #238050;
+  --viz-accent-soft: #b5d6c3;
+  --viz-reference: #a9a69e;
+  --viz-grid: #ebe9e3;
+  --viz-axis: #c9c6bd;
+  --viz-cat-1: #2a78d6;
+  --viz-cat-2: #eb6834;
+  --viz-cat-3: #1baf7a;
+  --viz-cat-4: #eda100;
+
+  --good: #1f7a4a;
+  --bad: #b8451a;
+
+  /* 테마 변수: 버튼·선택·강조에 쓰는 색과 하위 페이지 머리말. 기본값은 '기본' 테마(크림슨) */
+  --accent: var(--crimson);
+  --accent-dark: var(--crimson-dark);
+  --accent-soft: var(--crimson-soft);
+  --head-bg:
+    radial-gradient(circle at 90% 0%, rgba(255,255,255,.08) 0 140px, transparent 141px),
+    linear-gradient(135deg, var(--crimson-dark) 0%, var(--crimson) 60%, #7a1d3d 100%);
+  --head-ink: #fff;
+  --head-line: transparent;
+}
+
+/* 메인 화면에서 고른 디자인이 사이트 전체 테마가 된다 (<html data-theme>, lib/design.jsx)
+   차트 색(--viz-*)은 검증된 팔레트라 테마와 무관하게 그대로 둔다 */
+[data-theme="footprint"] {
+  --accent: #2f6b4f;
+  --accent-dark: #24563f;
+  --accent-soft: #e6f0ea;
+  --head-bg:
+    radial-gradient(circle at 6% 130%, rgba(47, 107, 79, .14) 0 180px, transparent 181px),
+    linear-gradient(180deg, #e6f0ea 0%, #eef5f0 100%);
+  --head-ink: var(--ink);
+  --head-line: var(--line);
+}
+
+[data-theme="story"] {
+  --accent: #1d4a37;
+  --accent-dark: #123326;
+  --accent-soft: #e2ece5;
+  --bg: #f5f6f2;
+  --line: #e2e5dd;
+  --head-bg:
+    radial-gradient(circle at 88% 10%, rgba(255,255,255,.06) 0 150px, transparent 151px),
+    linear-gradient(160deg, #123326 0%, #1d4a37 70%, #24563f 100%);
+  --head-ink: #fff;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.55;
+  word-break: keep-all;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+img, svg { display: block; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* ── 공통 컴포넌트 ───────────────────────────── */
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 15px;
+  border: 1px solid transparent; cursor: pointer; transition: transform .1s, background .15s;
+}
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-dark); }
+.btn-ghost { background: var(--surface); border-color: var(--line); }
+.btn-ghost:hover { border-color: var(--ink-3); }
+.btn-sm { padding: 8px 14px; font-size: 14px; }
+.btn-block { width: 100%; }
+
+.badge-sample {
+  display: inline-block; font-size: 11px; font-weight: 700; color: var(--ink-3);
+  border: 1px dashed var(--ink-3); padding: 1px 6px; border-radius: 4px; white-space: nowrap;
+}
+
+/* 간편 입력 대표값으로 계산한 값 / (v0.2) 자세히 입력으로 직접 넣은 값 */
+.badge-est, .badge-direct {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700;
+  padding: 2px 8px; border-radius: 99px; white-space: nowrap; vertical-align: middle;
+}
+.badge-est { color: #7a5300; background: #fff3d1; }
+.badge-direct { color: var(--green); background: var(--green-soft); }
+
+.badge-soon {
+  display: inline-block; font-size: 11px; font-weight: 700; color: var(--ink-2);
+  background: var(--line); padding: 2px 8px; border-radius: 99px; white-space: nowrap;
+}
+
+.pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill {
+  border: 1px solid var(--line); background: var(--surface); padding: 7px 16px;
+  border-radius: 99px; font-size: 14px; font-weight: 600; color: var(--ink-2); cursor: pointer;
+  white-space: nowrap;
+}
+.pill:hover { border-color: var(--ink-3); }
+.pill[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+.select, .input {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 10px;
+  padding: 9px 12px; font: inherit; font-size: 14px; color: var(--ink);
+}
+.input:focus, .select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+
+.link-btn {
+  background: none; border: 0; padding: 4px 0; font-size: 14px; font-weight: 600; color: var(--ink-2);
+  cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+}
+.link-btn:hover { color: var(--ink); }
+
+.check { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--ink-2); cursor: pointer; }
+.check input { accent-color: var(--accent); width: 18px; height: 18px; margin: 2px 0 0; flex: none; }
+.check strong { color: var(--ink); }
+
+/* 섹션 머리말 */
+.section { padding: 36px 0; }
+.sec-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.sec-head h2 { font-size: 24px; letter-spacing: -.02em; margin: 0; }
+.sec-head p { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+
+/* 하위 페이지 머리말 */
+.page-head {
+  background: var(--head-bg);
+  color: var(--head-ink);
+  border-bottom: 1px solid var(--head-line);
+  padding: 40px 0 36px;
+  margin-bottom: 28px;
+}
+.crumbs { font-size: 13px; opacity: .75; margin-bottom: 8px; }
+.crumbs a:hover { text-decoration: underline; }
+.page-head h1 { margin: 0 0 8px; font-size: 32px; letter-spacing: -.03em; line-height: 1.25; }
+.page-head p { margin: 0; opacity: .85; font-size: 16px; max-width: 640px; }
+
+.empty { padding: 48px 20px; text-align: center; color: var(--ink-3); }
+.empty h2 { color: var(--ink); margin: 0 0 6px; font-size: 22px; }
+.empty p { margin: 0 0 20px; }
+
+.note {
+  background: var(--surface); border: 1px dashed var(--line); border-radius: var(--radius);
+  padding: 16px 20px; font-size: 14px; color: var(--ink-2);
+}
+.note strong { color: var(--ink); }
+
+.delta-good { color: var(--good); font-weight: 700; }
+.delta-bad { color: var(--bad); font-weight: 700; }
+
+@media (max-width: 640px) {
+  .page-head { padding: 28px 0 26px; }
+  .page-head h1 { font-size: 26px; }
+  .sec-head h2 { font-size: 21px; }
+}

@@ -1,0 +1,48 @@
+.site-header {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.nav { display: flex; align-items: center; gap: 24px; height: 64px; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; letter-spacing: -.02em; white-space: nowrap; }
+.logo-mark {
+  width: 28px; height: 28px; border-radius: 8px; flex: none;
+  background: linear-gradient(135deg, var(--crimson) 0 50%, var(--green) 50% 100%);
+}
+
+.menu { display: flex; gap: 4px; margin-left: auto; }
+.menu-link { display: block; padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 15px; white-space: nowrap; }
+.menu-link:hover { background: var(--accent-soft); color: var(--accent); }
+.menu-link.active { color: var(--accent); }
+
+/* 메인 디자인 전환 */
+.design-switch { display: flex; align-items: center; margin-left: auto; }
+.design-switch + .menu { margin-left: 8px; }
+.design-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.design-seg button {
+  border: 0; background: none; padding: 5px 11px; border-radius: 7px; font-size: 13px; font-weight: 600;
+  color: var(--ink-2); cursor: pointer; white-space: nowrap;
+}
+.design-seg button:hover { color: var(--ink); background: var(--bg); }
+.design-seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.design-select { display: none; }
+
+@media (max-width: 860px) {
+  .design-seg { display: none; }
+  .design-select {
+    display: block; border: 1px solid var(--line); background: var(--surface); border-radius: 8px;
+    padding: 5px 6px; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); max-width: 130px;
+  }
+}
+
+@media (max-width: 640px) {
+  .nav { gap: 8px; height: 56px; }
+  .design-select { max-width: 104px; font-size: 12px; }
+  .logo { font-size: 16px; }
+  .logo-mark { width: 24px; height: 24px; }
+  .menu-link { padding: 6px 8px; font-size: 14px; }
+}
+@media (max-width: 400px) {
+  .logo { font-size: 0; gap: 0; }
+}
