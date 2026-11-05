@@ -3,7 +3,7 @@
 .m-toc a { padding: 7px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
 .m-toc a:hover { background: var(--accent-soft); color: var(--accent); }
 
-.m-body { display: grid; gap: 14px; }
+.m-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .m-sec { padding: 26px 30px; scroll-margin-top: 84px; }
 .m-sec h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: -.02em; }
 .m-sec h3 { margin: 22px 0 8px; font-size: 16px; }
@@ -21,6 +21,9 @@
 .m-table th, .m-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
 .m-table th:first-child, .m-table td:first-child { text-align: left; }
 .m-table th { font-size: 12px; color: var(--ink-3); font-weight: 700; }
+/* 설명 문장이 긴 표: 줄바꿈하고 왼쪽 정렬 */
+.m-table.is-text th, .m-table.is-text td { white-space: normal; text-align: left; vertical-align: top; }
+.m-table.is-text td:first-child { white-space: nowrap; }
 
 .m-list { margin: 0 0 14px; padding-left: 20px; font-size: 15px; color: var(--ink-2); display: grid; gap: 4px; }
 

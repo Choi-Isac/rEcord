@@ -1,0 +1,12 @@
+{
+  "name": "rEcord · 고려대학교 탄소발자국 계산기",
+  "short_name": "rEcord",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#faf8f4",
+  "theme_color": "#1D9E75",
+  "icons": [
+    { "src": "favicon_crimson-dot_192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "favicon_crimson-dot_512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

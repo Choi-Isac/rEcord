@@ -1,6 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 import { NAV } from "../lib/nav.js";
 import { HOME_DESIGNS, useHomeDesign } from "../lib/design.jsx";
+import logo from "../img/rEcord_crimson-dot.svg";
 import "./Header.css";
 
 // 사이트 디자인 전환(메인 구성 + 전체 색 테마): 넓은 화면은 버튼 묶음, 좁은 화면은 선택 상자
@@ -31,7 +32,7 @@ export default function Header() {
     <header className="site-header">
       <div className="wrap nav">
         <Link className="logo" to="/">
-          Ecord
+          <img className="logo-img" src={logo} alt="rEcord" width="700" height="218" />
         </Link>
 
         <DesignSwitch />

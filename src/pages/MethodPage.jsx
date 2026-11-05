@@ -22,10 +22,10 @@ import { num } from "../lib/format.js";
 import "./Method.css";
 
 // 페이지의 모든 표는 계산 엔진과 같은 상수에서 만들어져, 계수를 바꾸면 이 페이지도 함께 바뀐다
-function Table({ columns, rows }) {
+function Table({ columns, rows, text = false }) {
   return (
     <div className="m-table-wrap">
-      <table className="m-table">
+      <table className={text ? "m-table is-text" : "m-table"}>
         <thead>
           <tr>
             {columns.map((c) => (
@@ -229,6 +229,7 @@ export default function MethodPage() {
               계산하면'은 이 칸들로 계산한 값이에요.
             </p>
             <Table
+              text
               columns={["문항", "자세히 입력", "계산에 쓰는 방법"]}
               rows={[
                 ["통학 일수", "요일 선택", "고른 요일 수 = 주 통학 일수"],
@@ -264,6 +265,7 @@ export default function MethodPage() {
             />
             <h3>자세히 입력에 쓰는 계수</h3>
             <Table
+              text
               columns={["구분", "값"]}
               rows={[
                 [

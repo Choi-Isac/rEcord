@@ -5,7 +5,9 @@
   border-bottom: 1px solid var(--line);
 }
 .nav { display: flex; align-items: center; gap: 24px; height: 64px; }
-.logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; letter-spacing: -.02em; white-space: nowrap; }
+.logo { display: flex; align-items: center; flex: none; }
+/* rEcord 로고(src/img). SVG 여백을 빼면 글자 높이는 이미지 높이의 약 2/3 */
+.logo-img { display: block; height: 34px; width: auto; }
 
 .menu { display: flex; gap: 4px; margin-left: auto; }
 .menu-link { display: block; padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 15px; white-space: nowrap; }
@@ -35,9 +37,19 @@
 @media (max-width: 640px) {
   .nav { gap: 8px; height: 56px; }
   .design-select { max-width: 104px; font-size: 12px; }
-  .logo { font-size: 16px; }
+  .logo-img { height: 30px; }
   .menu-link { padding: 6px 8px; font-size: 14px; }
 }
-@media (max-width: 400px) {
-  .logo { font-size: 15px; }
+/* 아주 좁은 화면: 첫 줄에 로고와 메뉴, 디자인 선택은 둘째 줄로 */
+@media (max-width: 460px) {
+  .nav { flex-wrap: wrap; height: auto; padding-top: 8px; padding-bottom: 8px; row-gap: 6px; }
+  .logo-img { height: 26px; }
+  .menu { margin-left: auto; }
+  .design-switch { order: 3; width: 100%; margin-left: 0; }
+  .design-select { max-width: none; }
+  .menu-link { padding: 6px 6px; }
+}
+@media (max-width: 360px) {
+  .logo-img { height: 24px; }
+  .menu-link { padding: 6px 4px; font-size: 13px; }
 }
