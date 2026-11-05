@@ -44,21 +44,21 @@ function RangeScale({ total }) {
   );
 }
 
+// 피드백: 5점 척도 6문항 + 추가 기능 요청(선택 서술형). 기존 관심도는 결과를 보기 전 생각을 묻는다
 const LIKERT = [1, 2, 3, 4, 5];
-const INTENT = [
-  { value: "yes", label: "있어요" },
-  { value: "maybe", label: "고민 중" },
-  { value: "no", label: "없어요" },
-];
 const FEEDBACK_QS = [
-  { id: "understand", label: "결과가 잘 이해되었나요?", options: LIKERT, ends: ["전혀", "매우 잘"] },
-  { id: "trust", label: "결과를 얼마나 믿을 수 있나요?", options: LIKERT, ends: ["전혀", "매우"] },
-  { id: "intent", label: "제안된 행동 중 하나라도 해 볼 생각이 있나요?", options: INTENT },
-  { id: "revisit", label: "다음 번에 다시 측정해 볼 생각이 있나요?", options: INTENT },
+  { id: "interest", label: "계산하기 전, 환경·기후 문제에 얼마나 관심이 있었나요?", ends: ["전혀 없었음", "매우 많았음"] },
+  { id: "understand", label: "결과가 잘 이해되었나요?", ends: ["전혀", "매우 잘"] },
+  { id: "ease", label: "입력이 간편했나요?", ends: ["매우 번거로움", "매우 간편"] },
+  { id: "satisfaction", label: "계산기에 얼마나 만족하나요?", ends: ["매우 불만족", "매우 만족"] },
+  { id: "sufficiency", label: "알고 싶은 정보를 충분히 얻었나요?", ends: ["전혀", "충분히"] },
+  { id: "reuse", label: "다음에 이 계산기를 다시 쓸 생각이 있나요?", ends: ["전혀 없음", "꼭 쓸 것"] },
 ];
+const WISH_MAX = 500;
 
 function Feedback({ record, onSubmit }) {
   const [f, setF] = useState({});
+  const [wish, setWish] = useState("");
   if (record.feedback) {
     return (
       <div className="card feedback is-done">
@@ -71,33 +71,54 @@ function Feedback({ record, onSubmit }) {
   return (
     <div className="card feedback">
       <h3>계산기는 어땠나요?</h3>
-      <p className="feedback-sub">4개 질문, 10초면 끝나요. MVP 개선에만 써요.</p>
+      <p className="feedback-sub">{FEEDBACK_QS.length}개 질문, 30초면 끝나요. 계산기를 고치는 데만 써요.</p>
       {FEEDBACK_QS.map((q) => (
         <fieldset key={q.id} className="fb-q">
           <legend>{q.label}</legend>
-          <div className="fb-opts">
-            {q.ends && <span className="fb-end">{q.ends[0]}</span>}
-            {q.options.map((o) => {
-              const value = o.value ?? o;
-              return (
+          <div className="fb-scale">
+            <div className="fb-opts">
+              {LIKERT.map((v) => (
                 <button
-                  key={value}
+                  key={v}
                   type="button"
                   className="pill"
-                  aria-pressed={f[q.id] === value}
-                  onClick={() => setF((s) => ({ ...s, [q.id]: value }))}
+                  aria-pressed={f[q.id] === v}
+                  aria-label={`${v}점${v === 1 ? ` (${q.ends[0]})` : v === 5 ? ` (${q.ends[1]})` : ""}`}
+                  onClick={() => setF((s) => ({ ...s, [q.id]: v }))}
                 >
-                  {o.label ?? o}
+                  {v}
                 </button>
-              );
-            })}
-            {q.ends && <span className="fb-end">{q.ends[1]}</span>}
+              ))}
+            </div>
+            <div className="fb-ends" aria-hidden="true">
+              <span>1 = {q.ends[0]}</span>
+              <span>5 = {q.ends[1]}</span>
+            </div>
           </div>
         </fieldset>
       ))}
-      <button className="btn btn-primary btn-sm" disabled={!complete} onClick={() => onSubmit({ ...f, submittedAt: new Date().toISOString() })}>
+      <label className="fb-q fb-wish">
+        <span className="fb-wish-label">추가되었으면 하는 기능이 있나요? (선택)</span>
+        <textarea
+          className="input"
+          rows={3}
+          maxLength={WISH_MAX}
+          value={wish}
+          placeholder="예: 친구와 결과 비교하기, 지난 학기와 변화 그래프"
+          onChange={(e) => setWish(e.target.value)}
+        />
+        <span className="fb-count">
+          {wish.length}/{WISH_MAX}
+        </span>
+      </label>
+      <button
+        className="btn btn-primary btn-sm"
+        disabled={!complete}
+        onClick={() => onSubmit({ ...f, wish: wish.trim() || null, submittedAt: new Date().toISOString() })}
+      >
         보내기
       </button>
+      {!complete && <p className="fb-hint">점수 문항 {FEEDBACK_QS.length}개에 모두 답하면 보낼 수 있어요.</p>}
     </div>
   );
 }

@@ -56,10 +56,13 @@ const answersRow = ({ id, answers: a, defaultsUsed, ...record }) => ({
 
 const feedbackRow = (id, f) => ({
   response_id: id,
-  understand: f.understand,
-  trust: f.trust,
-  intent: f.intent,
-  revisit: f.revisit,
+  interest: f.interest ?? null,
+  understand: f.understand ?? null,
+  ease: f.ease ?? null,
+  satisfaction: f.satisfaction ?? null,
+  sufficiency: f.sufficiency ?? null,
+  reuse: f.reuse ?? null,
+  wish: f.wish ?? null,
   submitted_at: f.submittedAt,
 });
 

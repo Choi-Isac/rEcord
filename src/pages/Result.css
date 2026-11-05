@@ -73,9 +73,16 @@
 /* 피드백 */
 .fb-q { border: 0; padding: 0; margin: 0 0 14px; min-width: 0; }
 .fb-q legend { padding: 0; margin-bottom: 6px; font-size: 14px; font-weight: 700; }
-.fb-opts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.fb-opts { display: flex; align-items: center; gap: 6px; }
 .fb-opts .pill { padding: 6px 14px; min-width: 40px; }
-.fb-end { font-size: 12px; color: var(--ink-3); }
+/* 1~5 버튼이 문항마다 같은 자리에 오도록 양끝 설명은 버튼 아래에 둔다 */
+.fb-scale { display: inline-grid; gap: 4px; max-width: 100%; }
+.fb-ends { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--ink-3); }
+.fb-wish { display: grid; gap: 6px; }
+.fb-wish-label { font-size: 14px; font-weight: 700; }
+.fb-wish textarea { width: 100%; resize: vertical; min-height: 72px; line-height: 1.5; }
+.fb-count { justify-self: end; font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.fb-hint { margin: 8px 0 0; font-size: 12px; color: var(--ink-3); }
 .feedback.is-done { text-align: center; padding: 32px 24px; }
 .feedback.is-done p { margin: 0; color: var(--ink-2); }
 
