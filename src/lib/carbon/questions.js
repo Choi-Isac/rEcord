@@ -225,13 +225,16 @@ export const QUESTIONS = [
     category: "goods",
     type: "chips",
     label: "텀블러·다회용기를 얼마나 쓰나요?",
+    hint: "테이크아웃 음료나 배달을 10번 시킨다면, 그중 텀블러·다회용기를 쓰는 횟수로 골라 주세요.",
+    hintShort: "음료·배달 10번 중 쓰는 횟수예요.",
     // 가운데(가끔)에서 시작하는 막대 — 슬라이더처럼 기본값으로 둘 수 있다
     display: "stops",
     default: "sometimes",
+    // 횟수 구간은 자세히 입력의 비율을 간편 입력으로 옮기는 경계(GOODS.reuseRate 사이 중간값 22.5%·60%)와 같다
     options: [
-      { value: "rarely", label: "거의 안 씀" },
-      { value: "sometimes", label: "가끔" },
-      { value: "often", label: "자주" },
+      { value: "rarely", label: "거의 안 씀", sub: "10번 중 0~2번" },
+      { value: "sometimes", label: "가끔", sub: "10번 중 3~6번" },
+      { value: "often", label: "자주", sub: "10번 중 7번 이상" },
     ],
   },
 ];
@@ -282,7 +285,10 @@ export function progressOf(qs, answers, touched, detail) {
 export const missingRequired = (answers, detail) =>
   QUESTIONS.filter((q) => mustPick(q) && !isSkipped(q, answers, detail) && !hasValue(answers[q.id]));
 
-export const optionLabel = (id, value) =>
+const findOption = (id, value) =>
   QUESTIONS.flatMap((q) => q.parts ?? [q])
     .find((q) => q.id === id)
-    ?.options?.find((o) => o.value === value)?.label;
+    ?.options?.find((o) => o.value === value);
+
+export const optionLabel = (id, value) => findOption(id, value)?.label;
+export const optionSub = (id, value) => findOption(id, value)?.sub;

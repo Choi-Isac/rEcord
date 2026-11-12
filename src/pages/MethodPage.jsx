@@ -19,7 +19,7 @@ import {
   UNCERTAINTY,
   UNCERTAINTY_DIRECT,
 } from "../lib/carbon/factors.js";
-import { optionLabel } from "../lib/carbon/questions.js";
+import { optionLabel, optionSub } from "../lib/carbon/questions.js";
 import { num } from "../lib/format.js";
 import "./Method.css";
 
@@ -255,7 +255,10 @@ export default function MethodPage() {
             />
             <Table
               columns={["텀블러·다회용기", ...Object.keys(GOODS.reuseRate).map((k) => optionLabel("reusable", k))]}
-              rows={[["다회용 비율", ...Object.values(GOODS.reuseRate).map((v) => `${v * 100}%`)]]}
+              rows={[
+                ["기준", ...Object.keys(GOODS.reuseRate).map((k) => optionSub("reusable", k))],
+                ["다회용 비율", ...Object.values(GOODS.reuseRate).map((v) => `${v * 100}%`)],
+              ]}
             />
           </section>
 
