@@ -1,97 +1,104 @@
 // 감축 제안: 계산에 쓰는 양(resolve 결과)을 바꿔 다시 계산한 차이로 예상 감축량을 구한다
 // 간편 입력이든 자세히 입력이든 같은 방식으로 동작한다
 // 제안마다 줄이는 항목(item)을 정해 두어, 결과 화면에서 '가장 큰 항목'과 제안을 이어서 보여 준다
+// 생활을 크게 바꾸라는 제안 대신, 지금 습관에서 한 번·한 끼·1℃처럼 작게 바꾸는 행동만 고른다
 import { calculateResolved, resolve } from "./engine.js";
-import { COOL_LEVEL, DETAIL, FLIGHTS, FOOD, HEAT_LEVEL, HOME_TRIPS } from "./factors.js";
+import { COMMUTE, DETAIL, FLIGHTS, HOME_TRIPS } from "./factors.js";
 
 const itemValue = (r, key) => calculateResolved(r).items.find((i) => i.key === key).value;
 
-// 지금 값보다 작은 단계 중 가장 큰 것 (간편 입력의 '한 단계 줄이기'와 같다)
-const levelBelow = (levels, v) => levels.filter((l) => l < v - 1e-9).at(-1);
-const HOME_TRIP_LEVELS = Object.values(HOME_TRIPS.roundTripsPerYear).sort((x, y) => x - y);
-const MEAT_LEVELS = Object.values(FOOD.servingsPerWeek).sort((x, y) => x - y);
 const MEAT_KINDS = ["beef", "pork", "chicken"];
+const meatTotal = (r) => MEAT_KINDS.reduce((s, k) => s + (r.meat[k] ?? 0), 0);
 
-// 통학 비율 중 일부 수단을 다른 수단으로 옮긴다 (거리는 그대로). 택시를 줄이는 제안이면 택시 이용도 옮긴다
+// 통학: 일주일 중 하루(통학 일수가 4일이면 1/4)만 다른 수단으로 바꾼다 (거리는 그대로)
 const commuting = (r) => r.commute.trips > 0;
 const shareOf = (r, modes) => modes.reduce((s, m) => s + (r.commute.shares[m] ?? 0), 0);
 const usesTaxi = (r) => r.commute.taxiTrips > 0;
-function moveShares(r, from, to, { keepTaxi = false } = {}) {
+const oneDay = (r) => Math.min(1, (2 * COMMUTE.weeksPerYear) / r.commute.trips);
+function moveOneDay(r, from, to) {
+  const f = oneDay(r);
   const shares = { ...r.commute.shares };
   for (const m of from) {
-    shares[to] = (shares[to] ?? 0) + (shares[m] ?? 0);
-    delete shares[m];
+    const moved = (shares[m] ?? 0) * f;
+    shares[m] = (shares[m] ?? 0) - moved;
+    shares[to] = (shares[to] ?? 0) + moved;
   }
-  return { ...r, commute: { ...r.commute, shares, taxiTrips: keepTaxi ? r.commute.taxiTrips : 0 } };
+  const taxiTrips = from.includes("taxi") ? r.commute.taxiTrips * (1 - f) : r.commute.taxiTrips;
+  return { ...r, commute: { ...r.commute, shares, taxiTrips } };
 }
-const meatTotal = (r) => MEAT_KINDS.reduce((s, k) => s + (r.meat[k] ?? 0), 0);
 
-// 간편 입력으로는 바꿀 수 없는 습관(대기전력·샤워 시간)은 해당 항목의 일정 비율을 줄인다고 가정
-const STANDBY_SAVING = 0.1;
-const SHOWER_SAVING = 0.15;
-const REUSE_TARGET = 0.8; // 텀블러·다회용기 '자주' 쓰는 수준
+// 간편 입력으로는 바꿀 수 없는 습관은 해당 항목의 일정 비율을 줄인다고 가정
+// 냉난방 1℃: 한국에너지공단 안내(냉방 1℃ 올리면·난방 1℃ 낮추면 약 7% 절약)
+const STANDBY_SAVING = 0.05; // 자기 전·외출할 때 멀티탭 끄기 (대기전력은 가정 전력의 약 6%)
+const ONE_DEGREE_SAVING = 0.07;
+const SHOWER_SAVING = 0.1; // 샤워 1~2분 줄이기
+const REUSE_STEP = 0.2; // 텀블러·다회용기를 10번 중 2번 더
 
 const CANDIDATES = [
   {
     id: "transit",
     item: "commute",
     icon: "🚇",
-    title: "통학은 대중교통으로",
-    desc: "같은 거리를 자가용·택시·오토바이 대신 지하철로 다니면 1km당 배출이 크게 줄어요.",
+    title: "일주일에 하루는 대중교통으로",
+    desc: "자가용·택시·오토바이로 다니는 날 중 하루만 지하철·버스를 타도 통학 배출이 줄어요.",
     when: (r) => commuting(r) && (shareOf(r, ["car", "taxi", "moto"]) > 0 || usesTaxi(r)),
-    apply: (r) => moveShares(r, ["car", "taxi", "moto"], "subway"),
+    apply: (r) => moveOneDay(r, ["car", "taxi", "moto"], "subway"),
   },
   {
     id: "bike",
     item: "commute",
     icon: "🚲",
-    title: "가까운 통학길은 자전거로",
+    title: "날씨 좋은 날 하루는 자전거로",
     desc: "편도 5km 안팎이면 따릉이·자전거로도 비슷한 시간에 닿을 수 있어요.",
     when: (r) => commuting(r) && r.commute.km <= 5 && (shareOf(r, ["walk", "bike"]) < 1 || usesTaxi(r)),
-    apply: (r) => ({ ...r, commute: { ...r.commute, shares: { bike: 1 }, taxiTrips: 0 } }),
+    apply: (r) => moveOneDay(r, Object.keys(r.commute.shares).filter((m) => m !== "walk" && m !== "bike"), "bike"),
   },
   {
     id: "busToSubway",
     item: "commute",
     icon: "🚇",
-    title: "버스 대신 지하철로 통학",
-    desc: "같은 거리라면 지하철이 버스보다 1km당 배출이 절반 정도예요.",
+    title: "일주일에 하루는 버스 대신 지하철로",
+    desc: "같은 거리라면 지하철이 버스보다 1km당 배출이 절반 정도예요. 갈아타는 길이 비슷한 날에 골라 보세요.",
     when: (r) => commuting(r) && shareOf(r, ["bus"]) > 0 && r.commute.km > 5,
-    apply: (r) => moveShares(r, ["bus"], "subway", { keepTaxi: true }),
+    apply: (r) => moveOneDay(r, ["bus"], "subway"),
+  },
+  {
+    id: "homeTripsTrain",
+    item: "homeTrips",
+    icon: "🚆",
+    title: "본가 갈 때 네 번 중 한 번은 기차·버스로",
+    desc: "자가용 대신 KTX·고속버스를 타면 같은 거리의 배출이 5분의 1 정도예요.",
+    when: (r) => r.homeTrips.perYear > 0 && r.homeTrips.pkm > DETAIL.homeTripPkm.mixed,
+    apply: (r) => ({
+      ...r,
+      homeTrips: { ...r.homeTrips, pkm: r.homeTrips.pkm * 0.75 + DETAIL.homeTripPkm.mixed * 0.25 },
+    }),
   },
   {
     id: "homeTrips",
     item: "homeTrips",
-    icon: "🚆",
-    title: "본가 방문은 한 번에 길게",
-    desc: "다녀오는 횟수를 한 단계 줄이고, 한 번 갈 때 조금 더 오래 머물러 보세요.",
-    when: (r) => r.homeTrips.perYear > 0,
-    apply: (r) => ({ ...r, homeTrips: { ...r.homeTrips, perYear: levelBelow(HOME_TRIP_LEVELS, r.homeTrips.perYear) } }),
+    icon: "🗓️",
+    title: "본가 방문은 다른 일정과 묶어서",
+    desc: "연휴나 시험이 끝난 날처럼 갈 일이 겹칠 때 묶어 다녀오면, 열 번 중 한 번만 줄여도 이만큼 줄어요.",
+    when: (r) => r.homeTrips.perYear >= 10,
+    apply: (r) => ({ ...r, homeTrips: { ...r.homeTrips, perYear: r.homeTrips.perYear * 0.9 } }),
   },
   {
     id: "rail",
     item: "flights",
     icon: "🚄",
-    title: "국내 이동은 비행기 대신 KTX로",
-    desc: "부산·여수 등 철도로 갈 수 있는 곳은 기차를 타면 같은 거리의 배출이 6분의 1 수준이에요.",
+    title: "국내 여행 한 번은 비행기 대신 KTX로",
+    desc: "부산·여수처럼 기차로 갈 수 있는 곳은 KTX를 타면 같은 거리의 배출이 6분의 1 수준이에요.",
     when: (r) => r.flights.domestic > 0,
-    saving: (r) => r.flights.domestic * DETAIL.flightTripKm.domestic * (FLIGHTS.domestic.ef - HOME_TRIPS.pkm),
-  },
-  {
-    id: "fewerFlights",
-    item: "flights",
-    icon: "🧳",
-    title: "해외여행은 한 번 갈 때 길게",
-    desc: "해외여행 횟수를 2년에 한 번으로 줄이고, 대신 한 번에 머무는 기간을 늘려 보세요.",
-    when: (r) => r.flights.asia > 0 || r.flights.long > 0,
-    apply: (r) => ({ ...r, flights: { ...r.flights, asia: r.flights.asia / 2, long: r.flights.long / 2 } }),
+    saving: (r) =>
+      Math.min(1, r.flights.domestic) * DETAIL.flightTripKm.domestic * (FLIGHTS.domestic.ef - HOME_TRIPS.pkm),
   },
   {
     id: "standby",
     item: "electricity",
     icon: "🔌",
-    title: "대기전력 끄고 LED 조명 쓰기",
-    desc: "멀티탭 스위치로 쓰지 않는 기기의 대기전력을 끄고 LED 조명을 쓰면 전기 사용을 10% 정도 줄일 수 있어요.",
+    title: "자기 전에 멀티탭 끄기",
+    desc: "쓰지 않는 기기의 대기전력만 꺼도 전기 사용을 5% 정도 줄일 수 있어요.",
     when: () => true,
     saving: (r) => itemValue(r, "electricity") * STANDBY_SAVING,
   },
@@ -99,26 +106,26 @@ const CANDIDATES = [
     id: "cooling",
     item: "cooling",
     icon: "🌀",
-    title: "에어컨은 26℃, 선풍기와 함께",
-    desc: "설정 온도를 1℃ 올리고 선풍기를 같이 쓰면 냉방 전력을 한 단계 줄일 수 있어요.",
-    when: (r) => levelBelow(COOL_LEVEL, r.coolMult) !== undefined,
-    apply: (r) => ({ ...r, coolMult: levelBelow(COOL_LEVEL, r.coolMult) }),
+    title: "에어컨 온도 1℃ 올리기",
+    desc: "1℃만 올려도 냉방 전력이 7% 정도 줄어요. 선풍기를 함께 틀면 덥게 느껴지지 않아요.",
+    when: (r) => r.coolMult > 0,
+    saving: (r) => itemValue(r, "cooling") * ONE_DEGREE_SAVING,
   },
   {
     id: "heating",
     item: "heating",
     icon: "🧣",
-    title: "난방은 20℃, 실내에서 한 겹 더",
-    desc: "내복·조끼를 입고 쓰지 않는 방의 난방 밸브를 잠그면 난방을 한 단계 줄일 수 있어요.",
-    when: (r) => levelBelow(HEAT_LEVEL, r.heatMult) !== undefined,
-    apply: (r) => ({ ...r, heatMult: levelBelow(HEAT_LEVEL, r.heatMult) }),
+    title: "난방 온도 1℃ 낮추기",
+    desc: "실내에서 얇은 겉옷을 하나 걸치고 1℃만 낮춰도 난방 에너지가 7% 정도 줄어요.",
+    when: (r) => r.heatMult > 0,
+    saving: (r) => itemValue(r, "heating") * ONE_DEGREE_SAVING,
   },
   {
     id: "shower",
     item: "hotWater",
     icon: "🚿",
-    title: "샤워 시간 2분 줄이기",
-    desc: "샤워를 조금 짧게 하고 설거지는 받아서 하면 온수에 쓰는 가스를 15% 정도 줄일 수 있어요.",
+    title: "샤워 1~2분 짧게",
+    desc: "샤워를 조금만 짧게 해도 온수에 쓰는 가스를 10% 정도 줄일 수 있어요.",
     when: () => true,
     saving: (r) => itemValue(r, "hotWater") * SHOWER_SAVING,
   },
@@ -126,12 +133,12 @@ const CANDIDATES = [
     id: "meat",
     item: "meat",
     icon: "🥗",
-    title: "고기 먹는 날을 조금 줄이기",
-    desc: "주 2~3끼를 채식 메뉴로 바꾸거나, 소고기 대신 닭고기·두부를 골라 보세요.",
-    when: (r) => levelBelow(MEAT_LEVELS, meatTotal(r)) !== undefined,
-    // 소·돼지·닭을 같은 비율로 줄여 한 단계 아래 섭취량에 맞춘다 (생선은 그대로)
+    title: "일주일에 한 끼는 고기 없는 메뉴로",
+    desc: "한 끼만 비빔밥·두부 요리처럼 고기 없는 메뉴를 골라 보세요.",
+    when: (r) => meatTotal(r) > 1,
+    // 소·돼지·닭을 같은 비율로 줄여 주 1회분을 뺀다 (생선은 그대로)
     apply: (r) => {
-      const f = levelBelow(MEAT_LEVELS, meatTotal(r)) / meatTotal(r);
+      const f = (meatTotal(r) - 1) / meatTotal(r);
       return { ...r, meat: { ...r.meat, ...Object.fromEntries(MEAT_KINDS.map((k) => [k, (r.meat[k] ?? 0) * f])) } };
     },
   },
@@ -139,17 +146,21 @@ const CANDIDATES = [
     id: "mealsOut",
     item: "mealsOut",
     icon: "🍱",
-    title: "배달·외식 주 2회는 학식·직접 조리로",
-    desc: "배달 대신 학식을 이용하면 오토바이 배송과 조리 과정의 배출이 줄어요.",
+    title: "일주일에 한 번은 배달 대신 학식",
+    desc: "배달 한 번을 학식으로 바꾸면 배송과 일회용 용기에서 나오는 배출이 줄어요.",
     when: (r) => (r.meals.out ?? 0) + (r.meals.delivery ?? 0) >= 1,
-    // 배달·외식을 지금 비율대로 합계 2회 줄이고 직접 조리로 옮긴다
+    // 배달에서 먼저, 모자라면 외식에서 주 1회를 학식으로 옮긴다
     apply: (r) => {
-      const out = r.meals.out ?? 0;
-      const delivery = r.meals.delivery ?? 0;
-      const cut = Math.min(2, out + delivery) / (out + delivery);
+      const fromDelivery = Math.min(1, r.meals.delivery ?? 0);
+      const fromOut = 1 - fromDelivery;
       return {
         ...r,
-        meals: { ...r.meals, out: out * (1 - cut), delivery: delivery * (1 - cut), cook: (r.meals.cook ?? 0) + (out + delivery) * cut },
+        meals: {
+          ...r.meals,
+          delivery: (r.meals.delivery ?? 0) - fromDelivery,
+          out: (r.meals.out ?? 0) - fromOut,
+          campus: (r.meals.campus ?? 0) + 1,
+        },
       };
     },
   },
@@ -157,33 +168,33 @@ const CANDIDATES = [
     id: "clothes",
     item: "clothes",
     icon: "👕",
-    title: "새 옷 절반은 중고·교환으로",
-    desc: "중고 거래, 교내 옷 교환 행사를 이용하면 새 옷 생산에서 나오는 배출을 피할 수 있어요.",
+    title: "옷 살 때 가끔은 중고로",
+    desc: "네 번 살 때 한 번만 중고 거래나 교내 옷 교환을 이용해도 새 옷 생산 배출을 피할 수 있어요.",
     when: (r) => r.clothes.perMonth > 0 && r.clothes.secondhand < 1,
-    apply: (r) => ({ ...r, clothes: { ...r.clothes, secondhand: r.clothes.secondhand + (1 - r.clothes.secondhand) / 2 } }),
+    apply: (r) => ({ ...r, clothes: { ...r.clothes, secondhand: r.clothes.secondhand + (1 - r.clothes.secondhand) / 4 } }),
   },
   {
     id: "parcels",
     item: "parcels",
     icon: "📦",
-    title: "택배는 모아서 한 번에",
-    desc: "장바구니에 모았다가 한 번에 주문하면 포장재와 배송 횟수가 줄어요.",
-    when: (r) => r.parcels.domestic + r.parcels.overseas >= 3,
-    apply: (r) => ({ ...r, parcels: { domestic: (r.parcels.domestic * 2) / 3, overseas: (r.parcels.overseas * 2) / 3 } }),
+    title: "택배는 장바구니에 모아 한 번에",
+    desc: "급하지 않은 물건은 모았다가 주문하면 네 번 받을 택배가 세 번으로 줄어요.",
+    when: (r) => r.parcels.domestic + r.parcels.overseas >= 4,
+    apply: (r) => ({ ...r, parcels: { domestic: r.parcels.domestic * 0.75, overseas: r.parcels.overseas * 0.75 } }),
   },
   {
     id: "reusable",
     item: "disposables",
     icon: "🥤",
-    title: "텀블러·다회용기 챙기기",
-    desc: "카페와 배달에서 텀블러·다회용기를 쓰면 탄소중립포인트(녹색생활 실천)도 받을 수 있어요.",
-    when: (r) => r.disposables.tumbler < REUSE_TARGET || r.disposables.deliveryReuse < REUSE_TARGET,
+    title: "텀블러·다회용기 조금 더 챙기기",
+    desc: "10번 중 2번만 더 챙겨도 일회용 컵·용기가 줄고, 탄소중립포인트(녹색생활 실천)도 받을 수 있어요.",
+    when: (r) => r.disposables.tumbler < 1 || r.disposables.deliveryReuse < 1,
     apply: (r) => ({
       ...r,
       disposables: {
         ...r.disposables,
-        tumbler: Math.max(r.disposables.tumbler, REUSE_TARGET),
-        deliveryReuse: Math.max(r.disposables.deliveryReuse, REUSE_TARGET),
+        tumbler: Math.min(1, r.disposables.tumbler + REUSE_STEP),
+        deliveryReuse: Math.min(1, r.disposables.deliveryReuse + REUSE_STEP),
       },
     }),
     point: true,
