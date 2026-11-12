@@ -44,7 +44,8 @@
 .stepper .is-done .stepper-num { background: var(--green); color: #fff; }
 
 .q-section { padding-top: 18px; }
-.q-section-head { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; }
+/* 아이콘 · 제목(남는 폭) · '모두 자세히 입력' 버튼. 제목이 줄어들어 버튼은 늘 같은 자리에 있다 */
+.q-section-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; margin: 0 0 14px; }
 .q-section-icon { width: 48px; height: 48px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; font-size: 24px; flex: none; }
 .q-section-head h2 { margin: 0; font-size: 24px; letter-spacing: -.02em; line-height: 1.3; }
 .q-section-head p { margin: 0; font-size: 14px; color: var(--ink-2); }
@@ -243,10 +244,16 @@
 .detail-reset { font-size: 13px; margin-left: auto; }
 
 .detail-all {
-  margin-left: auto; align-self: center; border: 1px solid var(--line); background: var(--surface); border-radius: 99px;
+  display: inline-grid; border: 1px solid var(--line); background: var(--surface); border-radius: 99px;
   padding: 7px 14px; font-size: 13px; font-weight: 700; color: var(--accent); cursor: pointer; white-space: nowrap;
 }
+/* 두 문구를 한 칸에 겹친다: 폭은 긴 문구 기준, 보이는 것은 현재 문구 하나 */
+.detail-all > span { grid-area: 1 / 1; text-align: center; }
+.detail-all > span[aria-hidden="true"] { visibility: hidden; }
 .detail-all:hover { border-color: var(--accent); }
+/* 모두 펼친 상태: 채운 버튼으로 켜짐을 보여 준다 */
+.detail-all.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.detail-all.is-on:hover { filter: brightness(1.1); }
 
 .detail { margin-top: 12px; padding: 16px 18px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
 .detail-intro { margin: 0 0 12px; font-size: 13px; color: var(--ink-2); }
@@ -279,8 +286,9 @@
 .d-bill .d-num .input { width: 120px; }
 
 @media (max-width: 640px) {
-  .q-section-head { flex-wrap: wrap; }
-  .detail-all { margin-left: 0; }
+  /* 휴대폰: 버튼은 항상 제목 아래 줄 */
+  .q-section-head { grid-template-columns: auto minmax(0, 1fr); row-gap: 12px; }
+  .detail-all { grid-column: 1 / -1; justify-self: start; }
   .detail { padding: 14px; }
   .d-percent { min-width: 0; width: 100%; max-width: none; }
 }

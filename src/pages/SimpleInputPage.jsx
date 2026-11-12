@@ -196,7 +196,13 @@ export default function SimpleInputPage() {
       <PageHead
         title="간편 입력"
         mobileDescription="생활 습관에 가장 가까운 것을 골라 주세요."
-        description="생활 습관에 가장 가까운 것을 골라 주세요. 정확한 값을 알면 항목마다 '자세히 입력'을 펼쳐 넣을 수 있어요."
+        description={
+          <>
+            생활 습관에 가장 가까운 것을 골라 주세요.
+            <br />
+            정확한 값을 알면 항목마다 '자세히 입력'을 펼쳐 넣을 수 있어요.
+          </>
+        }
         crumbs={[{ to: "/calculator", label: "탄소발자국 계산기" }]}
       />
       <div className="wrap calc-layout">
@@ -230,8 +236,15 @@ export default function SimpleInputPage() {
                 <p>{current.desc}</p>
               </div>
               {expandableHere.length > 0 && (
-                <button type="button" className="detail-all" onClick={() => setOpen(expandableHere, !allOpenHere)}>
-                  {allOpenHere ? "자세히 입력 모두 접기" : "이 단계 모두 자세히 입력"}
+                // 두 문구를 겹쳐 두고 하나만 보여 준다 — 버튼 폭이 긴 문구에 맞춰 고정되어, 눌러도 위치가 바뀌지 않는다
+                <button
+                  type="button"
+                  className={allOpenHere ? "detail-all is-on" : "detail-all"}
+                  aria-pressed={allOpenHere}
+                  onClick={() => setOpen(expandableHere, !allOpenHere)}
+                >
+                  <span aria-hidden={allOpenHere}>이 단계 모두 자세히 입력</span>
+                  <span aria-hidden={!allOpenHere}>자세히 입력 모두 접기</span>
                 </button>
               )}
             </div>
