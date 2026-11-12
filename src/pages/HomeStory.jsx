@@ -62,8 +62,8 @@ const CHOICES = [
   },
   {
     title: "냉방",
-    low: { label: "보통", value: itemOf(REFERENCE_ANSWERS, "cooling") },
-    high: { label: "아주 많이", value: itemOf({ ...REFERENCE_ANSWERS, cooling: 5 }, "cooling") },
+    low: { label: "하루 6시간", value: itemOf(REFERENCE_ANSWERS, "cooling") },
+    high: { label: "하루 12시간", value: itemOf({ ...REFERENCE_ANSWERS, cooling: 5 }, "cooling") },
     note: "본가 4인 가족 중 나의 몫",
   },
 ];
@@ -131,9 +131,12 @@ export default function HomeStory() {
             <span>톤 CO₂e</span>
           </div>
           <p className="st-sub">
-            본가에서 지하철로 주 {REFERENCE_ANSWERS.commuteDays}일 통학하는 가상의 대학생 기준이에요{" "}
+            <span className="only-desktop">
+              본가에서 지하철로 주 {REFERENCE_ANSWERS.commuteDays}일 통학하는 가상의 대학생 기준이에요{" "}
+            </span>
+            <span className="only-mobile">가상의 대학생 기준 </span>
             <span className="badge-est">추정</span> · 소나무 {num(Math.round(REF.total.value / PINE_KG_PER_YEAR))}그루가 1년
-            동안 흡수해야 하는 양
+            동안 흡수할 양
           </p>
 
           <div className="st-scale" aria-hidden="true">
@@ -163,8 +166,8 @@ export default function HomeStory() {
           <p className="st-num">01</p>
           <h2>어디에서 나올까요?</h2>
           <p className="st-text">
-            한 칸이 1%예요. 매일 반복되는 <strong>식생활</strong>과 <strong>주거</strong>가 대부분을 차지하고, 통학은 생각보다
-            작아요. 칸이나 범례에 마우스를 올리면 영역별로 볼 수 있어요.
+            한 칸이 1%예요. <strong>식생활</strong>과 <strong>주거</strong>가 대부분이에요.
+            <span className="only-desktop"> 통학은 생각보다 작아요. 칸이나 범례에 마우스를 올리면 영역별로 볼 수 있어요.</span>
           </p>
           <Waffle />
         </div>
@@ -241,8 +244,11 @@ export default function HomeStory() {
           <div>
             <h2>내 선택은 어느 쪽일까요?</h2>
             <p>
-              {QUESTIONS.length}개 항목에 답하면 나의 연간 탄소발자국과 가장 효과적인 감축 방법을 알려드려요. 계산식은{" "}
-              <Link to="/method">계산 방법</Link>에 모두 공개돼 있어요.
+              {QUESTIONS.length}개 항목에 답하면 나의 연간 탄소발자국과 가장 효과적인 감축 방법을 알려드려요.
+              <span className="only-desktop">
+                {" "}
+                계산식은 <Link to="/method">계산 방법</Link>에 모두 공개돼 있어요.
+              </span>
             </p>
           </div>
           <Link className="btn st-btn" to="/calculator">

@@ -13,6 +13,7 @@
 .hero-compare { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 4px; font-size: 15px; color: var(--ink-2); }
 .hero-compare li::before { content: "·"; margin-right: 6px; color: var(--ink-3); }
 .hero-compare strong { color: var(--ink); }
+.compare-more, .sg-more { display: none; } /* 휴대폰에서만 (아래 640px) */
 
 /* 범위 눈금 */
 .scale { margin: 34px 0 6px; max-width: 560px; }
@@ -68,7 +69,7 @@
 .programs a:hover { border-color: var(--green); }
 .programs strong { color: var(--green); font-size: 15px; }
 .programs span { font-size: 13px; color: var(--ink-2); }
-.profile-note { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); }
+.profile-note { margin: 0; padding-top: 10px; font-size: 12px; color: var(--ink-3); }
 
 /* 피드백 */
 .fb-q { border: 0; padding: 0; margin: 0 0 14px; min-width: 0; }
@@ -83,8 +84,28 @@
 .fb-wish textarea { width: 100%; resize: vertical; min-height: 72px; line-height: 1.5; }
 .fb-count { justify-self: end; font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .fb-hint { margin: 8px 0 0; font-size: 12px; color: var(--ink-3); }
-.feedback.is-done { text-align: center; padding: 32px 24px; }
+.feedback.is-done { text-align: center; padding: 32px 24px; justify-content: center; align-items: center; }
 .feedback.is-done p { margin: 0; color: var(--ink-2); }
+.feedback.is-done .fb-again { margin-top: 14px; }
+.fb-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* 피드백 펼친 모습: 제목 옆 '접기' 버튼 */
+.fb-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; }
+.fb-toggle {
+  flex: none; padding: 6px 14px; border-radius: 99px; border: 1.5px solid var(--accent);
+  background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap;
+}
+.fb-toggle:hover { background: var(--accent); color: #fff; }
+.fb-toggle[aria-expanded="true"] { background: var(--surface); }
+
+/* 접힌 피드백(과 보낸 뒤 감사 카드)은 옆 '포인트 받고 줄이기'와 높이를 맞추고, 맨 아래 작은 안내끼리 줄을 맞춘다.
+   펼치면 피드백만 내용만큼 길어지고 포인트 카드는 원래 높이로 돌아간다 */
+.result-grid > .feedback:not(.is-open),
+.result-grid:has(> .feedback:not(.is-open)) > .profile { align-self: stretch; display: flex; flex-direction: column; }
+.result-grid > .profile .profile-note, .feedback .fb-note { margin-top: auto; }
+.fb-start { display: grid; grid-template-columns: minmax(0, 240px); gap: 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.fb-open { width: 100%; height: 38px; padding-top: 0; padding-bottom: 0; } /* 옆 거주 지역 선택 칸과 같은 높이 */
+.fb-note { margin: 0; padding-top: 10px; font-size: 12px; color: var(--ink-3); }
 
 .result-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
 .disclaimer { text-align: center; font-size: 12px; color: var(--ink-3); margin: 4px auto 0; max-width: 720px; }
@@ -95,11 +116,57 @@
   .suggestions li { grid-template-columns: auto 1fr; grid-template-rows: auto auto; }
   .sg-saving { grid-column: 2; }
 }
+/* 휴대폰: 총량 → 영역별 기여도 → 가장 큰 항목·제안 위주로 촘촘하게.
+   부차적인 내용(비교 문장 일부, 항목별 배출량 6위 아래)은 버튼으로 펼친다 */
 @media (max-width: 640px) {
-  .hero { grid-template-columns: 1fr; padding: 22px 20px; }
-  .hero-value { font-size: 46px; }
-  .advice { padding: 22px 20px; }
+  .result { gap: 10px; }
+  .hero { grid-template-columns: 1fr; gap: 14px; padding: 18px 16px; }
+  .hero-label { font-size: 14px; flex-wrap: wrap; row-gap: 4px; }
+  .hero-value { font-size: 42px; }
+  .hero-value small { font-size: 15px; }
+  .hero-range { font-size: 14px; }
+  .scale { margin: 28px 0 4px; }
+  .scale-axis { margin-top: 18px; }
+  .hero-compare { margin-top: 10px; font-size: 14px; gap: 2px; }
+  .hero-compare li.is-extra { display: none; }
+  .hero-compare.is-all li.is-extra { display: block; }
+  .compare-more { display: inline; margin-top: 6px; font-size: 13px; }
+  .trees { padding: 10px 14px; gap: 10px; border-radius: 12px; }
+  .trees-icon { font-size: 26px; }
+  .trees strong { font-size: 15px; }
+  .trees p { font-size: 13px; }
+
+  .result .chart-card { padding: 16px 16px 12px; }
+  .result .chart-head p { display: none; } /* 차트 부제(단위·색 설명): 값에 단위가 붙어 있어 생략 */
+  .advice { padding: 18px 16px; }
+  .biggest { padding-bottom: 12px; margin-bottom: 12px; }
+  .biggest h2 { font-size: 20px; margin-bottom: 0; }
+  .biggest-note { display: none; }
+  .advice-title { font-size: 16px; margin-bottom: 10px; }
+
+  /* 팁: 아이콘 · 제목 · 감축량 한 줄, 설명은 '방법 보기'로 펼친다 */
+  .suggestions { gap: 8px; }
+  .suggestions li { grid-template-columns: auto 1fr auto; grid-template-rows: auto; align-items: start; padding: 12px; gap: 0 10px; }
+  .sg-icon { font-size: 22px; }
+  .sg-target { margin-bottom: 2px; }
+  .suggestions strong { font-size: 14px; margin-bottom: 0; }
+  .suggestions .sg-desc { display: none; margin-top: 4px; }
+  .suggestions li.is-open .sg-desc { display: block; }
+  .sg-more { display: inline; margin-top: 4px; font-size: 12px; }
+  .sg-saving { grid-column: 3; white-space: nowrap; font-size: 12px; text-align: right; }
+  .sg-saving b { font-size: 15px; }
+  .advice-sum { margin-top: 12px; font-size: 14px; }
+
+  .profile, .feedback { padding: 18px 16px; }
+  .profile-sub, .feedback:not(.is-open) .feedback-sub { display: none; }
+  .programs span { display: none; } /* 제도 이름(링크)만 */
   .profile-fields { grid-template-columns: 1fr; }
+  .fb-start { grid-template-columns: 1fr; }
+
+  .result-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+  .result-actions .btn { width: 100%; padding-left: 8px; padding-right: 8px; font-size: 14px; }
+  .result-actions .btn-primary { grid-column: 1 / -1; }
+  .disclaimer { font-size: 11px; text-align: left; }
 }
 
 /* ── 테마별 마감 ── */
@@ -111,6 +178,18 @@
 @media (max-width: 640px) {
   [data-theme="story"] .hero-value { font-size: 52px; }
 }
+
+/* 항목별 배출량: 영역별 기여도 카드 높이에 맞춰 접어 두고, 아래를 흐리게 해 더 있다는 것을 보여 준다 */
+.fit-body { position: relative; overflow: hidden; }
+.fit-body.is-clamped::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--surface));
+}
+.fit-toggle {
+  display: block; width: 100%; margin-top: 8px; padding: 7px 0; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface); font-size: 13px; font-weight: 700; color: var(--accent); cursor: pointer;
+}
+.fit-toggle:hover { border-color: var(--accent); }
 
 /* 항목별 배출량 주석, 제안이 줄이는 항목 표시 */
 .items-note { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); }

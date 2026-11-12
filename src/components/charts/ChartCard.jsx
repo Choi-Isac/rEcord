@@ -1,11 +1,12 @@
 import { useState } from "react";
 
 // 차트 카드: 제목·범례·표 보기 전환. 표 보기는 툴팁 없이도 모든 값을 확인할 수 있게 한다
-export default function ChartCard({ title, subtitle, legend, table, children, className = "" }) {
+// cardRef: 다른 카드가 이 카드의 높이에 맞출 때 쓴다 (결과 화면의 항목별 배출량)
+export default function ChartCard({ title, subtitle, legend, table, children, className = "", cardRef }) {
   const [asTable, setAsTable] = useState(false);
 
   return (
-    <div className={`card chart-card ${className}`}>
+    <div className={`card chart-card ${className}`} ref={cardRef}>
       <div className="chart-head">
         <div>
           <h3>{title}</h3>

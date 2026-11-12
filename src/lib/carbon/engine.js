@@ -29,12 +29,13 @@ export const CATEGORIES = [
 export const REFERENCE_ANSWERS = {
   commuteDays: 4,
   commuteMinutes: 40,
-  commuteMode: "subway",
+  commuteMode: ["subway"],
   homeTrips: "semester",
   flights: "none",
   housing: "family",
   household: 4,
   cooling: 3,
+  heatingType: "unknown",
   heating: 3,
   meat: "mid",
   mealsOut: 4,
@@ -43,7 +44,35 @@ export const REFERENCE_ANSWERS = {
   reusable: "sometimes",
 };
 
-export const commuteKm = (mode, minutes) => (COMMUTE.speedKmh[mode] * minutes) / 60;
+// 고른 통학 수단 목록 (2026-11-11 이전 응답은 수단 하나를 문자열로 저장)
+export const modesOf = (v) => (Array.isArray(v) ? v : v ? [v] : []);
+
+// 수단을 여러 개 고르면 같은 시간씩 탄다고 보고 속도를 평균한다 (고르지 않았으면 지하철)
+export function commuteSpeed(modes) {
+  const list = modesOf(modes).length ? modesOf(modes) : ["subway"];
+  return list.reduce((s, m) => s + COMMUTE.speedKmh[m], 0) / list.length;
+}
+export const commuteKm = (modes, minutes) => (commuteSpeed(modes) * minutes) / 60;
+
+// 2026-11-11 이전 자세히 입력: 냉난방(climate)이 한 문항이었고, 난방 방식은 거주 형태(housing)에 있었다.
+// 지금 구조(냉방 cooling · 난방 heating · 거주 형태의 전기·가스 요금 housing)로 옮긴다
+export function upgradeDetail(detail) {
+  const { climate, ...d } = detail ?? {};
+  if (d.housing && "heating" in d.housing) {
+    const { heating, ...rest } = d.housing;
+    if (Object.keys(rest).length) d.housing = rest;
+    else delete d.housing;
+  }
+  if (climate) {
+    if (!d.cooling) d.cooling = { coolHours: climate.coolHours, coolMonths: climate.coolMonths };
+    if (!d.heating) d.heating = { heatHours: climate.heatHours, heatMonths: climate.heatMonths };
+    if (!d.housing && (climate.elecBill > 0 || climate.gasBill > 0)) {
+      const { elecBill, elecUnit, gasBill, gasUnit } = climate;
+      d.housing = { elecBill, elecUnit, gasBill, gasUnit };
+    }
+  }
+  return d;
+}
 
 // 슬라이더 최댓값("10개 이상" 등)은 대표값으로 바꿔 계산
 export const clothesCount = (v) => (v >= GOODS.clothesMax ? GOODS.clothesOverflow : v);
@@ -55,7 +84,7 @@ export const householdShare = (n) => (1 + EXTRA_PERSON_SHARE * (n - 1)) / n;
 // 답하지 않은 항목(null)은 기준 예시 값으로 채운다. 동거 인원은 거주 형태의 기본 인원을 따른다
 export function fillDefaults(answers) {
   const filled = { ...REFERENCE_ANSWERS };
-  for (const [k, v] of Object.entries(answers)) if (v !== null && v !== undefined) filled[k] = v;
+  for (const [k, v] of Object.entries(answers)) if (v !== null && v !== undefined && !(Array.isArray(v) && !v.length)) filled[k] = v;
   if (answers.housing && answers.household == null) filled.household = HOUSING[answers.housing].defaultHousehold;
   return filled;
 }
@@ -80,31 +109,34 @@ const gasHeated = (type) => type === "gas" || type === "unknown";
 // 자세히 입력이 있는 문항은 그 값이 간편 입력보다 우선한다. 감축 제안도 이 값을 바꿔 다시 계산한다.
 export function resolve(answers, detail) {
   const a = fillDefaults(answers);
-  const d = detail ?? {};
+  // 2026-11-11 이전 응답은 난방 방식을 거주 형태의 자세히 입력에 담았다
+  const heatingType = detail?.housing?.heating ?? a.heatingType;
+  const d = upgradeDetail(detail);
   const h = HOUSING[a.housing];
   const people = d.household?.people ?? a.household;
   // 2명 이상이 나의 부담 비율을 넣으면 가구 전체 에너지 × 그 비율, 비우면 똑같이 나눈다
   const myShare = people >= 2 && d.household?.myShare > 0 ? d.household.myShare / 100 : null;
   const share = myShare !== null ? myShare * (1 + EXTRA_PERSON_SHARE * (people - 1)) : householdShare(people);
   const billShare = myShare ?? 1 / people;
-  const heatingType = d.housing?.heating ?? "unknown";
 
   const days = d.commuteDays ? d.commuteDays.days.length : a.commuteDays;
   const md = d.commuteMode;
-  const cl = d.climate;
-  const coolMult = cl ? (cl.coolHours * cl.coolMonths) / (DETAIL.coolRef.hours * DETAIL.coolRef.months) : COOL_LEVEL[a.cooling - 1];
-  const heatMult = cl ? (cl.heatHours * cl.heatMonths) / (DETAIL.heatRef.hours * DETAIL.heatRef.months) : HEAT_LEVEL[a.heating - 1];
+  const cool = d.cooling;
+  const heat = d.heating;
+  const bills = d.housing ?? {};
+  const coolMult = cool ? (cool.coolHours * cool.coolMonths) / (DETAIL.coolRef.hours * DETAIL.coolRef.months) : COOL_LEVEL[a.cooling - 1];
+  const heatMult = heat ? (heat.heatHours * heat.heatMonths) / (DETAIL.heatRef.hours * DETAIL.heatRef.months) : HEAT_LEVEL[a.heating - 1];
 
   // 요금·사용량을 직접 넣으면, 모형으로 구한 사용량을 그 값에 맞춰 비례 조정한다 (요금 중 나의 몫 = 부담 비율, 없으면 균등)
   let elecScale = 1;
   let gasScale = 1;
-  if (cl?.elecBill > 0) {
-    const kwh = (cl.elecUnit === "kwh" ? cl.elecBill : cl.elecBill / DETAIL.wonPerKwh) * MONTHS_PER_YEAR * billShare;
+  if (bills.elecBill > 0) {
+    const kwh = (bills.elecUnit === "kwh" ? bills.elecBill : bills.elecBill / DETAIL.wonPerKwh) * MONTHS_PER_YEAR * billShare;
     const modeled = (h.elec + h.cool * coolMult + (heatingType === "electric" ? h.heat * heatMult * DETAIL.kwhPerM3 : 0)) * share;
     elecScale = kwh / modeled;
   }
-  if (cl?.gasBill > 0) {
-    const m3 = (cl.gasUnit === "m3" ? cl.gasBill : cl.gasBill / DETAIL.wonPerM3) * MONTHS_PER_YEAR * billShare;
+  if (bills.gasBill > 0) {
+    const m3 = (bills.gasUnit === "m3" ? bills.gasBill : bills.gasBill / DETAIL.wonPerM3) * MONTHS_PER_YEAR * billShare;
     const modeled = (h.hot + (gasHeated(heatingType) ? h.heat * heatMult : 0)) * share;
     gasScale = m3 / modeled;
   }
@@ -119,7 +151,8 @@ export function resolve(answers, detail) {
     commute: {
       trips: days * 2 * COMMUTE.weeksPerYear,
       km: d.commuteMinutes?.km ?? commuteKm(a.commuteMode, a.commuteMinutes),
-      shares: md ? normalize(md.shares) : { [a.commuteMode]: 1 },
+      // 간편 입력: 고른 수단을 같은 시간씩 탄다고 본다
+      shares: md ? normalize(md.shares) : Object.fromEntries(modesOf(a.commuteMode).map((m, _, all) => [m, 1 / all.length])),
       taxiTrips: md ? md.taxiPerMonth * DETAIL.semesterMonths : 0,
       carFactor: md ? DETAIL.carFuel[md.fuel] : 1,
     },
@@ -153,10 +186,10 @@ export function resolve(answers, detail) {
         (d.commuteDays || d.commuteMinutes || d.commuteMode) && "commute",
         d.homeTrips && "homeTrips",
         d.flights && "flights",
-        cl?.elecBill > 0 && "electricity",
-        cl && "cooling",
-        (cl || d.housing) && "heating",
-        cl?.gasBill > 0 && "hotWater",
+        bills.elecBill > 0 && "electricity",
+        cool && "cooling",
+        heat && "heating",
+        bills.gasBill > 0 && "hotWater",
         d.meat && "meat",
         d.mealsOut && "mealsOut",
         d.clothes && "clothes",

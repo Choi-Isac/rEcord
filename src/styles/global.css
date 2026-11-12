@@ -146,8 +146,8 @@ img, svg { display: block; }
 .check input { accent-color: var(--accent); width: 18px; height: 18px; margin: 2px 0 0; flex: none; }
 .check strong { color: var(--ink); }
 
-/* 섹션 머리말 */
-.section { padding: 36px 0; }
+/* 섹션 머리말 (위아래 여백만: .wrap과 함께 쓸 때 좌우 여백을 지우지 않도록) */
+.section { padding-top: 36px; padding-bottom: 36px; }
 .sec-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .sec-head h2 { font-size: 24px; letter-spacing: -.02em; margin: 0; }
 .sec-head p { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
@@ -178,7 +178,14 @@ img, svg { display: block; }
 .delta-good { color: var(--good); font-weight: 700; }
 .delta-bad { color: var(--bad); font-weight: 700; }
 
+/* 화면 폭에 따라 다른 문구: 휴대폰(640px 이하)에서는 짧은 문구(.only-mobile, 블록은 .only-mobile-block)를 보여 준다 */
+/* 다른 규칙(.area ul 등)보다 앞서도록 !important */
+.only-mobile, .only-mobile-block { display: none !important; }
+
 @media (max-width: 640px) {
+  .only-desktop { display: none !important; }
+  .only-mobile { display: inline !important; }
+  .only-mobile-block { display: block !important; }
   .page-head { padding: 28px 0 26px; }
   .page-head h1 { font-size: 26px; }
   .sec-head h2 { font-size: 21px; }

@@ -1,12 +1,12 @@
-import { useRef, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import PageHead from "../components/PageHead.jsx";
 import Question from "../components/Question.jsx";
 import { CATEGORIES, calculate, commuteKm } from "../lib/carbon/engine.js";
 import { HOUSING } from "../lib/carbon/factors.js";
-import { QUESTIONS, isAnswered, isSkipped, missingRequired, optionLabel } from "../lib/carbon/questions.js";
+import { QUESTIONS, isSkipped, missingRequired, optionLabel, progressOf } from "../lib/carbon/questions.js";
 import { canExpand, fillBlank, syncSimple } from "../lib/carbon/details.js";
-import { answeredCount, useDraft } from "../lib/draft.js";
+import { draftProgress, upgradeDraft, useDraft } from "../lib/draft.js";
 import { createResponse, useResponses } from "../lib/responses.js";
 import { num, toTon } from "../lib/format.js";
 import { CAT_COLORS } from "../lib/colors.js";
@@ -16,11 +16,18 @@ import "./Calculator.css";
 const STEPS = CATEGORIES.map((c) => ({ ...c, questions: QUESTIONS.filter((q) => q.category === c.key) }));
 const stepOf = (q) => STEPS.findIndex((s) => s.key === q.category);
 
+// 단계 표시의 진행도: 답한 수(기본값 수)/전체, 예: 0(+2)/5
+const stepText = ({ answered, defaults, total }) => `${answered}${defaults ? `(+${defaults})` : ""}/${total}`;
+
 // 간편 입력값에서 바로 파생되는 안내 (계산 과정을 보여 줘 결과를 믿을 수 있게)
 function derivedHint(q, answers, touched) {
-  if (q.id === "commuteMinutes" && answers.commuteMode) {
-    const km = commuteKm(answers.commuteMode, answers.commuteMinutes);
-    return `${optionLabel("commuteMode", answers.commuteMode)} 기준 편도 약 ${num(km, 1)}km로 계산해요.`;
+  const modes = answers.commuteMode ?? [];
+  if (q.id === "commuteMinutes" && modes.length) {
+    const km = num(commuteKm(modes, answers.commuteMinutes), 1);
+    const labels = modes.map((m) => optionLabel("commuteMode", m)).join("·");
+    return modes.length > 1
+      ? `${labels}: 같은 시간씩 탄다고 보고 편도 약 ${km}km로 계산해요.`
+      : `${labels} 기준 편도 약 ${km}km로 계산해요.`;
   }
   if (q.id === "household" && answers.housing && !touched.includes("household")) {
     return "거주 형태에 맞춰 미리 골라 두었어요. 다르면 바꿔 주세요.";
@@ -28,7 +35,7 @@ function derivedHint(q, answers, touched) {
   return null;
 }
 
-function LivePanel({ result, answered, missing, actionLabel, onAction }) {
+function LivePanel({ result, progress, missing, actionLabel, onAction }) {
   const { total } = result;
   return (
     <aside className="card live" aria-label="실시간 예상 배출량">
@@ -52,11 +59,14 @@ function LivePanel({ result, answered, missing, actionLabel, onAction }) {
         ))}
       </ul>
 
+      {/* 진하게: 답한 문항, 옅게: 기본값으로 둔 문항 */}
       <div className="progress" aria-hidden="true">
-        <span style={{ width: `${(answered / QUESTIONS.length) * 100}%` }} />
+        <span style={{ width: `${(progress.answered / progress.total) * 100}%` }} />
+        <span className="is-default" style={{ width: `${(progress.defaults / progress.total) * 100}%` }} />
       </div>
       <p className="live-progress">
-        {QUESTIONS.length}개 중 <strong>{answered}개</strong> 답함
+        {progress.total}개 중 <strong>{progress.filled}개</strong> 입력
+        {progress.defaults > 0 && <span className="live-default"> (기본값 {progress.defaults}개)</span>}
       </p>
       <button className="btn btn-primary btn-block" onClick={onAction}>
         {actionLabel}
@@ -71,16 +81,26 @@ function LivePanel({ result, answered, missing, actionLabel, onAction }) {
 
 export default function SimpleInputPage() {
   const navigate = useNavigate();
-  const [draft, setDraft] = useDraft();
+  const [stored, setStored] = useDraft();
+  // 이전 버전의 초안도 지금 형식으로 보여 주고, 고칠 때도 지금 형식으로 바꾼 뒤에 고친다
+  const draft = upgradeDraft(stored);
+  const setDraft = (update) => setStored((d) => (typeof update === "function" ? update(upgradeDraft(d)) : update));
   const { add } = useResponses();
   const [showMissing, setShowMissing] = useState(false);
+  const location = useLocation();
   // 완료 직후 초안을 지우면서 시작 화면으로 되돌려 보내지 않도록
   const finished = useRef(false);
 
+  // 이어서 입력: 시작 화면이 넘겨준, 값이 아예 없는 첫 문항으로 스크롤
+  const focusId = location.state?.focus;
+  useEffect(() => {
+    if (!focusId) return;
+    requestAnimationFrame(() => document.getElementById(`q-${focusId}`)?.scrollIntoView({ block: "center" }));
+  }, [focusId]);
+
   if (!draft?.consent?.service) return finished.current ? null : <Navigate to="/calculator" replace />;
 
-  const { answers, touched } = draft;
-  const detail = draft.detail ?? {};
+  const { answers, touched, detail } = draft;
   const detailOpen = draft.detailOpen ?? [];
   const step = draft.step ?? 0;
   const current = STEPS[step];
@@ -89,7 +109,7 @@ export default function SimpleInputPage() {
   const missing = missingRequired(answers, detail);
   const missingHere = missing.filter((q) => q.category === current.key);
 
-  // key: 바꿀 답변, qid: 직접 조작한 문항(냉난방은 슬라이더 2개가 한 문항)
+  // key: 바꿀 답변, qid: 직접 조작한 문항(난방은 방식과 시간이 한 문항)
   const setAnswer = (key, value, qid = key) =>
     setDraft((d) => {
       const next = { ...d.answers, [key]: value };
@@ -155,7 +175,10 @@ export default function SimpleInputPage() {
     }
     // 건너뛴 문항(통학 0일의 시간·수단)의 자세히 입력은 저장하지 않는다
     const kept = Object.fromEntries(
-      Object.entries(detail).filter(([id]) => !isSkipped(QUESTIONS.find((q) => q.id === id), answers, detail))
+      Object.entries(detail).filter(([id]) => {
+        const q = QUESTIONS.find((x) => x.id === id);
+        return q && !isSkipped(q, answers, detail);
+      })
     );
     const record = createResponse({ ...draft, detail: kept, detailOpened: draft.detailOpened ?? [] });
     finished.current = true;
@@ -172,6 +195,7 @@ export default function SimpleInputPage() {
     <>
       <PageHead
         title="간편 입력"
+        mobileDescription="생활 습관에 가장 가까운 것을 골라 주세요."
         description="생활 습관에 가장 가까운 것을 골라 주세요. 정확한 값을 알면 항목마다 '자세히 입력'을 펼쳐 넣을 수 있어요."
         crumbs={[{ to: "/calculator", label: "탄소발자국 계산기" }]}
       />
@@ -179,17 +203,14 @@ export default function SimpleInputPage() {
         <div className="calc-main">
           <ol className="stepper" aria-label="입력 단계">
             {STEPS.map((s, i) => {
-              const done = s.questions.filter((q) => isAnswered(q, answers, touched, detail)).length;
-              const complete = !missing.some((q) => q.category === s.key);
-              const state = i === step ? "is-current" : complete && done > 0 ? "is-done" : "";
+              const p = progressOf(s.questions, answers, touched, detail);
+              const state = i === step ? "is-current" : p.filled === p.total ? "is-done" : "";
               return (
                 <li key={s.key} className={state}>
                   <button onClick={() => goTo(i)} aria-current={i === step ? "step" : undefined}>
                     <span className="stepper-num">{state === "is-done" ? "✓" : i + 1}</span>
                     <span className="stepper-label">{s.label}</span>
-                    <small>
-                      {done}/{s.questions.length}
-                    </small>
+                    <small title={`직접 답함 ${p.answered}개 · 기본값 ${p.defaults}개 · 전체 ${p.total}개`}>{stepText(p)}</small>
                   </button>
                 </li>
               );
@@ -249,7 +270,7 @@ export default function SimpleInputPage() {
 
         <LivePanel
           result={result}
-          answered={answeredCount(draft)}
+          progress={draftProgress(draft)}
           missing={missing.length}
           actionLabel={primary.label}
           onAction={primary.onClick}

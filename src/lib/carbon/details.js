@@ -2,13 +2,14 @@
 //
 // 규칙
 // - 펼치면 간편 입력값으로 정한 기본값이 보인다. 값을 하나라도 바꾸면 그 문항의 자세히 입력이 저장되고,
-//   계산에서 간편 입력값보다 우선한다(replaces). 거주 형태의 난방 방식처럼 간편 입력에 더해지는 것도 있다.
+//   계산에서 간편 입력값보다 우선한다. replaces: false면 간편 입력에 더해지고(거주 형태의 전기·가스 요금),
+//   배열이면 그 답만 대신한다(난방은 시간만 대신하고 난방 방식은 간편 입력 그대로).
 // - '간편 입력으로 되돌리기'를 누르면 그 문항의 자세히 입력을 지운다.
 // - 간편 입력으로 나타낼 수 있는 문항(toSimple)은 자세히 입력한 값을 가장 가까운 간편 입력 칸에도 반영한다.
 //   계산은 자세히 입력으로 하고, 간편 입력 칸은 화면 표시와 '간편 입력만으로 계산한 값' 비교에 쓴다.
-import { clothesCount, commuteKm, flightCounts, parcelCount } from "./engine.js";
-import { COMMUTE, COOL_LEVEL, DETAIL, FOOD, GOODS, HEAT_LEVEL, HOME_TRIPS } from "./factors.js";
-import { COMMUTE_MINUTE_STEPS } from "./questions.js";
+import { clothesCount, commuteKm, commuteSpeed, flightCounts, modesOf, parcelCount } from "./engine.js";
+import { CLIMATE_HOURS, COMMUTE, COOL_LEVEL, DETAIL, FOOD, GOODS, HEAT_LEVEL, HOME_TRIPS } from "./factors.js";
+import { COMMUTE_MINUTE_STEPS, hasValue } from "./questions.js";
 
 export const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
@@ -53,10 +54,10 @@ export const DETAILS = {
   commuteMinutes: {
     intro: "지도 앱 경로의 편도 거리를 넣으면 가장 정확해요.",
     fields: [{ key: "km", type: "number", label: "통학 편도 거리", unit: "km", min: 0, max: 200, step: 0.1 }],
-    defaults: (a) => ({ km: round(commuteKm(a.commuteMode ?? "subway", a.commuteMinutes), 0.1) }),
-    // 거리 ÷ 수단 속도 → 가장 가까운 슬라이더 칸
+    defaults: (a) => ({ km: round(commuteKm(a.commuteMode, a.commuteMinutes), 0.1) }),
+    // 거리 ÷ 수단 속도(여러 수단이면 평균) → 가장 가까운 슬라이더 칸
     toSimple: (v, a) => ({
-      commuteMinutes: COMMUTE_MINUTE_STEPS[nearestIndex(COMMUTE_MINUTE_STEPS, (v.km / COMMUTE.speedKmh[a.commuteMode ?? "subway"]) * 60)],
+      commuteMinutes: COMMUTE_MINUTE_STEPS[nearestIndex(COMMUTE_MINUTE_STEPS, (v.km / commuteSpeed(a.commuteMode)) * 60)],
     }),
     summary: (v) => `편도 ${v.km}km`,
   },
@@ -79,20 +80,25 @@ export const DETAILS = {
       },
       { key: "taxiPerMonth", type: "number", label: "택시로 통학 (한 달, 편도 1회 기준)", unit: "회", min: 0, max: 200, step: 1 },
     ],
-    // 택시 통학이면 학기 중 모든 통학(주 일수 × 왕복 2회 × 4주)을 택시로 본다
-    defaults: (a) =>
-      a.commuteMode === "taxi"
-        ? { shares: { subway: 100 }, fuel: "gasoline", taxiPerMonth: a.commuteDays * 2 * 4 }
-        : { shares: { [a.commuteMode]: 100 }, fuel: "gasoline", taxiPerMonth: 0 },
-    // 가장 비중이 큰 수단 (택시는 월 횟수를 학기 중 한 달 통학 횟수에 대한 비율로)
+    // 고른 수단을 똑같이 나눈다. 택시는 비율 대신, 한 달 통학 횟수(주 일수 × 왕복 2회 × 4주) 중 그 몫을 월 횟수로
+    defaults: (a) => {
+      const modes = modesOf(a.commuteMode);
+      const others = modes.filter((m) => m !== "taxi");
+      return {
+        shares: others.length ? splitRounded(100, Object.fromEntries(others.map((m) => [m, 1 / others.length])), 1) : { subway: 100 },
+        fuel: "gasoline",
+        taxiPerMonth: modes.includes("taxi") ? Math.round((a.commuteDays * 2 * 4) / modes.length) : 0,
+      };
+    },
+    // 비중이 있는 수단을 모두 고른다 (택시는 월 횟수를 학기 중 한 달 통학 횟수에 대한 비율로)
     toSimple: (v, a) => {
       const monthly = a.commuteDays * 2 * 4;
       const taxi = monthly > 0 ? Math.min(1, v.taxiPerMonth / monthly) : 0;
       const total = Object.values(v.shares).reduce((s, x) => s + (Number(x) || 0), 0);
       const weights = { taxi };
       for (const [m, x] of Object.entries(v.shares)) weights[m] = total ? ((Number(x) || 0) / total) * (1 - taxi) : 0;
-      const top = Object.keys(weights).reduce((best, m) => (weights[m] > weights[best] ? m : best));
-      return weights[top] > 0 ? { commuteMode: top } : {};
+      const modes = Object.keys(COMMUTE.speedKmh).filter((m) => weights[m] > 0);
+      return modes.length ? { commuteMode: modes } : {};
     },
     summary: (v) =>
       [
@@ -136,53 +142,8 @@ export const DETAILS = {
   },
   housing: {
     replaces: false,
-    intro: "난방 방식에 따라 같은 난방도 배출량이 달라져요.",
+    intro: "전기·가스 요금을 직접 낸다면 고지서의 월평균 값을 넣어 주세요. 전기·냉난방·온수 항목을 그 사용량에 맞춰 계산해요.",
     fields: [
-      {
-        key: "heating",
-        type: "choice",
-        label: "난방 방식",
-        options: [
-          { value: "gas", label: "개별 가스보일러" },
-          { value: "electric", label: "전기 난방 (히터·전기장판)" },
-          { value: "district", label: "지역·중앙난방" },
-          { value: "unknown", label: "관리비 포함·모름" },
-        ],
-      },
-    ],
-    defaults: () => ({ heating: "unknown" }),
-  },
-  household: {
-    intro: "4명 이상이면 정확한 인원을 적어 주세요. 2명 이상이면 집 전기·가스 중 내가 쓰는(내는) 비율도 넣을 수 있어요.",
-    fields: [
-      { key: "people", type: "number", label: "함께 사는 인원 (나 포함)", unit: "명", min: 1, max: 30, step: 1 },
-      {
-        key: "myShare",
-        type: "number",
-        label: "나의 부담 비율 (비우면 똑같이 나눔)",
-        unit: "%",
-        min: 1,
-        max: 100,
-        step: 1,
-        optional: true,
-        placeholder: (v) => `${Math.round(100 / v.people)}`,
-        showIf: (v) => v.people >= 2,
-      },
-    ],
-    defaults: (a) => ({ people: a.household, myShare: null }),
-    toSimple: (v) => ({ household: Math.min(4, Math.max(1, v.people)) }),
-    summary: (v) => `${v.people}명${v.people >= 2 && v.myShare ? ` · 내 몫 ${v.myShare}%` : ""}`,
-  },
-  climate: {
-    intro: "냉난방 시간과 기간을 적어 주세요. 요금을 직접 낸다면 고지서의 월평균 값을 넣으면 그 값에 맞춰 계산해요.",
-    fields: [
-      { type: "heading", label: "❄️ 냉방 (에어컨)" },
-      { key: "coolHours", type: "number", label: "하루 사용 시간", unit: "시간", min: 0, max: 24, step: 0.5 },
-      { key: "coolMonths", type: "number", label: "사용하는 기간", unit: "개월", min: 0, max: 12, step: 1 },
-      { type: "heading", label: "🔥 난방" },
-      { key: "heatHours", type: "number", label: "하루 사용 시간", unit: "시간", min: 0, max: 24, step: 0.5 },
-      { key: "heatMonths", type: "number", label: "사용하는 기간", unit: "개월", min: 0, max: 12, step: 1 },
-      { type: "heading", label: "🧾 요금을 직접 내는 경우 (선택)" },
       {
         key: "elecBill",
         type: "bill",
@@ -206,23 +167,61 @@ export const DETAILS = {
         optional: true,
       },
     ],
-    // '보통'(3단계) = 냉방 하루 6시간 × 3개월, 난방 하루 8시간 × 4개월. 단계 배수만큼 시간을 늘리거나 줄인다
-    defaults: (a) => ({
-      coolHours: round(COOL_LEVEL[a.cooling - 1] * DETAIL.coolRef.hours, 0.5),
-      coolMonths: DETAIL.coolRef.months,
-      heatHours: round(HEAT_LEVEL[a.heating - 1] * DETAIL.heatRef.hours, 0.5),
-      heatMonths: DETAIL.heatRef.months,
-      elecBill: null,
-      elecUnit: "won",
-      gasBill: null,
-      gasUnit: "won",
-    }),
-    // 시간 × 기간 배수와 가장 가까운 단계
+    defaults: () => ({ elecBill: null, elecUnit: "won", gasBill: null, gasUnit: "won" }),
+    summary: (v) =>
+      [
+        v.elecBill > 0 && `전기 월 ${v.elecBill.toLocaleString("ko-KR")}${v.elecUnit === "kwh" ? "kWh" : "원"}`,
+        v.gasBill > 0 && `가스 월 ${v.gasBill.toLocaleString("ko-KR")}${v.gasUnit === "m3" ? "m³" : "원"}`,
+      ]
+        .filter(Boolean)
+        .join(" · ") || "요금 입력 안 함",
+  },
+  household: {
+    intro: "4명 이상이면 정확한 인원을 적어 주세요. 2명 이상이면 집 전기·가스 중 내가 쓰는(내는) 비율도 넣을 수 있어요.",
+    fields: [
+      { key: "people", type: "number", label: "함께 사는 인원 (나 포함)", unit: "명", min: 1, max: 30, step: 1 },
+      {
+        key: "myShare",
+        type: "number",
+        label: "나의 부담 비율 (비우면 똑같이 나눔)",
+        unit: "%",
+        min: 1,
+        max: 100,
+        step: 1,
+        optional: true,
+        placeholder: (v) => `${Math.round(100 / v.people)}`,
+        showIf: (v) => v.people >= 2,
+      },
+    ],
+    defaults: (a) => ({ people: a.household, myShare: null }),
+    toSimple: (v) => ({ household: Math.min(4, Math.max(1, v.people)) }),
+    summary: (v) => `${v.people}명${v.people >= 2 && v.myShare ? ` · 내 몫 ${v.myShare}%` : ""}`,
+  },
+  cooling: {
+    intro: "에어컨을 켜는 날의 하루 평균 시간과, 1년 중 켜는 기간을 적어 주세요.",
+    fields: [
+      { key: "coolHours", type: "number", label: "하루 사용 시간", unit: "시간", min: 0, max: 24, step: 0.5 },
+      { key: "coolMonths", type: "number", label: "사용하는 기간", unit: "개월", min: 0, max: 12, step: 1 },
+    ],
+    defaults: (a) => ({ coolHours: CLIMATE_HOURS[a.cooling - 1], coolMonths: DETAIL.coolRef.months }),
+    // 시간 × 기간 배수와 가장 가까운 칸
     toSimple: (v) => ({
       cooling: nearestIndex(COOL_LEVEL, (v.coolHours * v.coolMonths) / (DETAIL.coolRef.hours * DETAIL.coolRef.months)) + 1,
+    }),
+    summary: (v) => `하루 ${v.coolHours}시간 × ${v.coolMonths}개월`,
+  },
+  heating: {
+    replaces: ["heating"], // 난방 시간만 대신한다 (난방 방식은 간편 입력 그대로)
+    intro: "난방을 켜는 날의 하루 평균 시간과, 1년 중 켜는 기간을 적어 주세요.",
+    fields: [
+      { key: "heatHours", type: "number", label: "하루 사용 시간", unit: "시간", min: 0, max: 24, step: 0.5 },
+      { key: "heatMonths", type: "number", label: "사용하는 기간", unit: "개월", min: 0, max: 12, step: 1 },
+    ],
+    defaults: (a) => ({ heatHours: CLIMATE_HOURS[a.heating - 1], heatMonths: DETAIL.heatRef.months }),
+    toSimple: (v) => ({
       heating: nearestIndex(HEAT_LEVEL, (v.heatHours * v.heatMonths) / (DETAIL.heatRef.hours * DETAIL.heatRef.months)) + 1,
     }),
-    summary: (v) => `냉방 ${v.coolHours}시간×${v.coolMonths}개월 · 난방 ${v.heatHours}시간×${v.heatMonths}개월`,
+    summary: (v) => `하루 ${v.heatHours}시간 × ${v.heatMonths}개월`,
   },
   meat: {
     intro: "1회 = 1인분(약 120g)이에요. 소고기는 같은 양의 닭고기보다 배출이 약 5배예요.",
@@ -308,7 +307,7 @@ export function syncSimple(answers, detail) {
 }
 
 // 자세히 입력을 펼칠 수 있는가: 칩 문항은 먼저 골라야 그 답으로 기본값을 정할 수 있다
-export const canExpand = (q, answers) => hasDetail(q) && (q.type !== "chips" || answers[q.id] != null);
+export const canExpand = (q, answers) => hasDetail(q) && (q.type !== "chips" || hasValue(answers[q.id]));
 
 // 화면에 보여 줄 값: 저장된 자세히 입력, 없으면 간편 입력으로 정한 기본값
 export const detailValues = (q, answers, detail) => detail?.[q.id] ?? DETAILS[q.id].defaults(answers);

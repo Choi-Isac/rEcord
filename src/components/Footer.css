@@ -11,6 +11,9 @@
 .site-footer a { display: block; padding: 3px 0; }
 .site-footer a:hover { color: var(--accent); }
 
+.footer-policy summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
+.footer-policy p { margin-top: 4px; }
+
 @media (max-width: 640px) {
   .footer-grid { grid-template-columns: 1fr; }
 }

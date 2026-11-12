@@ -2,10 +2,12 @@
 // 결과값이 아니라 원본 입력값을 저장하고, 계수 버전·입력 방식·학기를 함께 기록한다.
 // v0.1은 서버 없이 이 브라우저(localStorage)에만 저장한다.
 import { FACTOR_VERSION } from "./carbon/factors.js";
-import { QUESTIONS, answerKeys } from "./carbon/questions.js";
+import { QUESTIONS, answerKeys, mustPick, withDefaults } from "./carbon/questions.js";
 import { useStoredState } from "./storage.js";
 
-export const SCHEMA_VERSION = 2; // 2: 자세히 입력(detail, detailOpened) 추가
+// 2: 자세히 입력(detail, detailOpened) 추가
+// 3: 통학 수단 여러 개(commuteMode 배열), 난방 방식(heatingType), 냉난방 하루 시간 칸, 냉방·난방 자세히 입력 분리
+export const SCHEMA_VERSION = 3;
 export const RESPONSES_KEY = "carboncalc:responses";
 export const DRAFT_KEY = "carboncalc:draft";
 
@@ -33,11 +35,11 @@ export function createResponse({ answers, touched, startedAt, consent, detail = 
     completedAt: now.toISOString(),
     durationSec: Math.round((now - new Date(startedAt)) / 1000),
     consent,
-    answers,
+    answers: withDefaults(answers),
     detail, // 자세히 입력한 문항별 값 (간편 입력보다 우선)
     detailOpened, // 자세히 입력을 펼쳐 본 문항 (값을 바꾸지 않았어도)
-    // 직접 움직이지 않고 기본값 그대로 둔 슬라이더 (기본값 의존도 측정용)
-    defaultsUsed: QUESTIONS.filter((q) => q.type !== "chips" && !touched.includes(q.id) && !detail[q.id]).flatMap(answerKeys),
+    // 직접 바꾸지 않고 기본값 그대로 둔 문항: 슬라이더, 텀블러·다회용기 (기본값 의존도 측정용)
+    defaultsUsed: QUESTIONS.filter((q) => !mustPick(q) && !touched.includes(q.id) && !detail[q.id]).flatMap(answerKeys),
     profile: { region: "" }, // 거주 지역 (결과 화면의 포인트 안내)
     feedback: null,
   };

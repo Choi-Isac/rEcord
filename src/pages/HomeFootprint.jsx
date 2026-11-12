@@ -75,7 +75,7 @@ const FLOW = CATEGORIES.map((c) => ({ ...c, count: QUESTIONS.filter((q) => q.cat
 
 const RESULT_PARTS = [
   { title: "추정 범위", desc: "한 숫자 대신 가능성이 높은 범위를 '추정' 배지와 함께 보여 줘요.", demo: "range" },
-  { title: "가장 큰 항목", desc: "13개 항목 중 내 발자국을 가장 키우는 한 가지를 짚어 줘요.", demo: "biggest" },
+  { title: "가장 큰 항목", desc: `${QUESTIONS.length}개 항목 중 내 발자국을 가장 키우는 한 가지를 짚어 줘요.`, demo: "biggest" },
   { title: "감축 제안 3개", desc: "내 답에서 효과가 큰 행동 세 가지와 예상 감축량을 알려 줘요.", demo: "tips" },
 ];
 
@@ -130,8 +130,11 @@ export default function HomeFootprint() {
               <em>발자국</em>이 남아요
             </h1>
             <p className="fp-lead">
-              오른쪽에서 네 가지만 골라 보세요. 발자국이 얼마나 커지는지 바로 보여요. {QUESTIONS.length}개 항목에 모두
-              답하면 내 결과와 줄이는 방법까지 알려드려요.
+              <span className="only-desktop">
+                오른쪽에서 네 가지만 골라 보세요. 발자국이 얼마나 커지는지 바로 보여요. {QUESTIONS.length}개 항목에 모두
+                답하면 내 결과와 줄이는 방법까지 알려드려요.
+              </span>
+              <span className="only-mobile">아래에서 네 가지만 골라 보세요. 발자국 크기가 바로 바뀌어요.</span>
             </p>
             <ul className="fp-meta">
               <li>⏱ 약 1분</li>
@@ -159,7 +162,8 @@ export default function HomeFootprint() {
                         aria-pressed={picks[q.id] === o.value}
                         onClick={() => setPicks((p) => ({ ...p, [q.id]: o.value }))}
                       >
-                        <span aria-hidden="true">{o.icon}</span> {o.label}
+                        {o.icon && <span aria-hidden="true">{o.icon} </span>}
+                        {o.label}
                       </button>
                     ))}
                   </div>
@@ -190,9 +194,17 @@ export default function HomeFootprint() {
             </div>
 
             <p className="fp-try-note">
-              {picked < QUICK.length
-                ? `${QUICK.length}개 중 ${picked}개 골랐어요. 고르지 않은 항목은 기준 예시(가상의 대학생) 값이에요.`
-                : "나머지 9개 항목은 기준 예시 값이에요. 이어서 답하면 더 정확해져요."}
+              {picked < QUICK.length ? (
+                <>
+                  {QUICK.length}개 중 {picked}개 골랐어요.
+                  <span className="only-desktop"> 고르지 않은 항목은 기준 예시(가상의 대학생) 값이에요.</span>
+                </>
+              ) : (
+                <>
+                  나머지 {QUESTIONS.length - QUICK.length}개 항목은 기준 예시 값이에요.
+                  <span className="only-desktop"> 이어서 답하면 더 정확해져요.</span>
+                </>
+              )}
             </p>
             <div className="fp-try-actions">
               <button className="btn btn-primary" onClick={continueWithPicks} disabled={picked === 0}>
@@ -253,7 +265,11 @@ export default function HomeFootprint() {
           ))}
         </div>
         <p className="fp-trust">
-          계산식과 배출계수는 모두 <Link to="/method">계산 방법</Link>에 공개돼 있어요. 입력값은 내 브라우저에 저장되고, 연구 활용에 동의했을 때만 이름 없이 서버에 모아요.
+          계산식과 배출계수는 <Link to="/method">계산 방법</Link>에 모두 공개되어 있습니다.
+          <span className="only-desktop">
+            {" "}
+            입력 정보는 이용 중인 브라우저에 저장되며, 통계·연구 활용에 동의한 경우에 한해 개인 식별 정보 없이 서버에 저장됩니다.
+          </span>
         </p>
       </section>
     </div>

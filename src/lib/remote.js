@@ -1,5 +1,5 @@
 // 응답을 Supabase에 보내기 (docs/데이터베이스-구조.md의 테이블 구조)
-// 통계·연구 활용에 동의한 응답만 보낸다. 동의하지 않은 응답은 이 브라우저에만 남는다.
+// 입력값·거주 지역은 통계·연구 활용에 동의한 응답만 보내고, 피드백은 동의와 관계없이 보낸다.
 // 어디까지 보냈는지는 레코드의 remote에 기록해 두고, 실패한 부분은 다음에 결과 화면을 볼 때 다시 보낸다.
 import { supabase } from "./supabase.js";
 
@@ -36,13 +36,14 @@ const answersRow = ({ id, answers: a, defaultsUsed, ...record }) => ({
   response_id: id,
   commute_days: a.commuteDays,
   commute_minutes: a.commuteMinutes,
-  commute_mode: a.commuteMode ?? null, // 통학하지 않으면 고르지 않아 NULL
+  commute_mode: a.commuteMode?.length ? a.commuteMode : null, // 여러 개 고를 수 있음(text[]). 통학하지 않으면 NULL
   home_trips: a.homeTrips,
   flights: a.flights,
   housing: a.housing,
   household: a.household,
   cooling: a.cooling,
   heating: a.heating,
+  heating_type: a.heatingType ?? null,
   meat: a.meat,
   meals_out: a.mealsOut,
   clothes: a.clothes,
@@ -54,19 +55,23 @@ const answersRow = ({ id, answers: a, defaultsUsed, ...record }) => ({
   detail: detailColumn(record),
 });
 
-const feedbackRow = (id, f) => ({
-  response_id: id,
-  interest: f.interest ?? null,
-  understand: f.understand ?? null,
-  ease: f.ease ?? null,
-  satisfaction: f.satisfaction ?? null,
-  sufficiency: f.sufficiency ?? null,
-  reuse: f.reuse ?? null,
-  wish: f.wish ?? null,
-  submitted_at: f.submittedAt,
+// 피드백은 다시 입력할 수 있어 set_feedback 함수로 넣거나 덮어쓴다 (응답 1건에 피드백 1행).
+// 동의하지 않은 응답의 피드백은 responses 행 없이 응답 id(무작위 UUID)로만 저장된다
+const feedbackArgs = (id, f) => ({
+  p_id: id,
+  p_interest: f.interest ?? null,
+  p_understand: f.understand ?? null,
+  p_ease: f.ease ?? null,
+  p_satisfaction: f.satisfaction ?? null,
+  p_sufficiency: f.sufficiency ?? null,
+  p_reuse: f.reuse ?? null,
+  p_wish: f.wish ?? null,
+  p_submitted_at: f.submittedAt,
 });
 
-export const shouldSync = (record) => Boolean(supabase && record.consent?.research);
+const research = (record) => Boolean(record.consent?.research);
+
+export const shouldSync = (record) => Boolean(supabase && (research(record) || record.feedback));
 
 // 실패한 단계만 다음에 다시 보낸다
 async function step(name, run) {
@@ -79,17 +84,22 @@ async function step(name, run) {
   }
 }
 
-// 응답·답변을 먼저 보내고(지역·피드백은 이 행을 참조), 지역과 피드백은 서로 따로 보낸다
+// 동의한 응답: 응답·답변을 먼저 보내고(지역은 이 행을 고친다) 지역을 보낸다. 피드백은 따로 보낸다
 export async function syncRecord(record) {
   const done = { ...record.remote };
-  const profile = profileKey(record.profile);
+  if (research(record)) await syncResponse(record, done);
+  await syncFeedback(record, done);
+  return done;
+}
 
+async function syncResponse(record, done) {
+  const profile = profileKey(record.profile);
   if (!done.response) {
     const ok = await step("입력값", async () => {
       await insert("responses", responseRow(record));
       await insert("response_answers", answersRow(record));
     });
-    if (!ok) return done;
+    if (!ok) return;
     Object.assign(done, { response: true, profile });
   }
   if (done.profile !== profile) {
@@ -102,8 +112,16 @@ export async function syncRecord(record) {
     });
     if (ok) done.profile = profile;
   }
-  if (record.feedback && !done.feedback) {
-    if (await step("피드백", () => insert("feedback", feedbackRow(record.id, record.feedback)))) done.feedback = true;
+}
+
+// 마지막으로 보낸 피드백의 시각(feedbackAt)과 다르면 보낸다 → 다시 입력하면 새 답으로 덮어씀
+async function syncFeedback(record, done) {
+  if (record.feedback && done.feedbackAt !== record.feedback.submittedAt) {
+    const sentAt = record.feedback.submittedAt;
+    const ok = await step("피드백", async () => {
+      const { error } = await supabase.rpc("set_feedback", feedbackArgs(record.id, record.feedback));
+      if (error) throw error;
+    });
+    if (ok) done.feedbackAt = sentAt;
   }
-  return done;
 }

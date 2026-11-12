@@ -62,3 +62,7 @@
   .areas, .trust { grid-template-columns: 1fr; }
   .cta { flex-direction: column; align-items: flex-start; }
 }
+
+/* 휴대폰: 영역별 질문 목록은 접어 둔다 */
+.area-qs summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink-3); }
+.area-qs ul { margin-top: 8px; }

@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import PageHead from "../components/PageHead.jsx";
 import { ITEMS, householdShare } from "../lib/carbon/engine.js";
 import {
   COMMUTE,
+  CLIMATE_HOURS,
   COOL_LEVEL,
   DETAIL,
   EF,
@@ -17,7 +19,7 @@ import {
   UNCERTAINTY,
   UNCERTAINTY_DIRECT,
 } from "../lib/carbon/factors.js";
-import { CLIMATE_LEVELS, optionLabel } from "../lib/carbon/questions.js";
+import { optionLabel } from "../lib/carbon/questions.js";
 import { num } from "../lib/format.js";
 import "./Method.css";
 
@@ -59,15 +61,26 @@ const SECTIONS = [
 ];
 
 export default function MethodPage() {
+  // 휴대폰에서 펼쳐 둔 절 (PC에서는 모든 절이 늘 펼쳐져 있다)
+  const [openSecs, setOpenSecs] = useState(["overview"]);
+  const toggleSec = (id) => setOpenSecs((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const secClass = (id) => (openSecs.includes(id) ? "card m-sec is-open" : "card m-sec");
+
   return (
     <>
-      <PageHead title="계산 방법" description="간편 입력과 자세히 입력의 답을 어떤 값과 계수로 계산하는지 모두 공개해요." />
+      <PageHead
+        title="계산 방법"
+        description="간편 입력과 자세히 입력의 답을 어떤 값과 계수로 계산하는지 모두 공개해요."
+        mobileDescription="계산에 쓰는 값과 계수를 모두 공개해요."
+      />
       <div className="wrap method">
         <nav className="m-toc" aria-label="목차">
           {SECTIONS.map((s) => (
             <a key={s.id} href={`#m-${s.id}`} onClick={(e) => {
               e.preventDefault();
-              document.getElementById(`m-${s.id}`)?.scrollIntoView({ behavior: "smooth" });
+              // 접혀 있으면 펼친 뒤 그 절로 이동
+              setOpenSecs((list) => (list.includes(s.id) ? list : [...list, s.id]));
+              requestAnimationFrame(() => document.getElementById(`m-${s.id}`)?.scrollIntoView({ behavior: "smooth" }));
             }}>
               {s.label}
             </a>
@@ -75,8 +88,12 @@ export default function MethodPage() {
         </nav>
 
         <div className="m-body">
-          <section id="m-overview" className="card m-sec">
-            <h2>개요</h2>
+          <section id="m-overview" className={secClass("overview")}>
+            <h2>
+              <button type="button" className="m-sec-toggle" aria-expanded={openSecs.includes("overview")} onClick={() => toggleSec("overview")}>
+                개요
+              </button>
+            </h2>
             <p>
               연간 탄소발자국은 {ITEMS.length}개 항목의 배출량을 더한 값이에요. 단위는 이산화탄소 외 온실가스까지 환산한{" "}
               <strong>kg CO₂e/년</strong>이에요.
@@ -93,15 +110,20 @@ export default function MethodPage() {
             </div>
           </section>
 
-          <section id="m-transport" className="card m-sec">
-            <h2>🚌 이동</h2>
+          <section id="m-transport" className={secClass("transport")}>
+            <h2>
+              <button type="button" className="m-sec-toggle" aria-expanded={openSecs.includes("transport")} onClick={() => toggleSec("transport")}>
+                🚌 이동
+              </button>
+            </h2>
             <h3>통학</h3>
             <div className="formula">
               주 통학 일수 × 2(왕복) × 편도 거리 × 수단별 계수 × {COMMUTE.weeksPerYear}주
             </div>
             <p>
               편도 거리는 편도 시간에 수단별 평균 속도를 곱해 구해요. 걷고 기다리는 시간까지 포함한 '문에서 문까지' 속도예요.
-              통학은 학기 중({COMMUTE.weeksPerYear}주)에만 한다고 봐요.
+              수단을 여러 개 고르면 같은 시간씩 탄다고 보고 속도와 배출계수를 평균해요. 통학은 학기 중({COMMUTE.weeksPerYear}주)에만
+              한다고 봐요.
             </p>
             <Table
               columns={["통학 수단", "평균 속도 (km/h)", "배출계수 (kg/인·km)", "편도 40분이면"]}
@@ -138,11 +160,15 @@ export default function MethodPage() {
             />
           </section>
 
-          <section id="m-housing" className="card m-sec">
-            <h2>🏠 주거</h2>
+          <section id="m-housing" className={secClass("housing")}>
+            <h2>
+              <button type="button" className="m-sec-toggle" aria-expanded={openSecs.includes("housing")} onClick={() => toggleSec("housing")}>
+                🏠 주거
+              </button>
+            </h2>
             <div className="formula">
-              (전기 + 냉방 × 냉방 단계 배수) × {EF.electricity} kg/kWh + (난방 × 난방 단계 배수 + 온수·조리) × {EF.gas}{" "}
-              kg/m³ → × 나의 몫
+              (전기 + 냉방 × 냉방 시간 배수) × {EF.electricity} kg/kWh + 난방 × 난방 시간 배수 × 난방 방식 계수 + 온수·조리 ×{" "}
+              {EF.gas} kg/m³ → × 나의 몫
             </div>
             <p>거주 형태마다 1인 가구 기준의 연간 에너지 사용량을 정해 두었어요. 지역·중앙난방은 도시가스 사용량으로 환산했어요.</p>
             <Table
@@ -156,13 +182,23 @@ export default function MethodPage() {
                 `${h.defaultHousehold}명`,
               ])}
             />
-            <h3>냉난방 단계</h3>
+            <h3>냉난방 하루 사용 시간</h3>
+            <p>
+              위 냉방·난방 사용량은 하루 {DETAIL.coolRef.hours}시간씩 냉방 {DETAIL.coolRef.months}개월, 난방{" "}
+              {DETAIL.heatRef.months}개월 쓸 때의 값이에요. 고른 칸의 하루 시간에 비례해 늘리거나 줄여요.
+            </p>
             <Table
-              columns={["단계", ...CLIMATE_LEVELS]}
+              columns={["하루 사용 시간", ...CLIMATE_HOURS.map((h, i) => (i === CLIMATE_HOURS.length - 1 ? `${h}시간 이상` : `${h}시간`))]}
               rows={[
-                ["냉방 배수", ...COOL_LEVEL.map((v) => `×${v}`)],
-                ["난방 배수", ...HEAT_LEVEL.map((v) => `×${v}`)],
+                ["냉방 배수", ...COOL_LEVEL.map((v) => `×${num(v, 2)}`)],
+                ["난방 배수", ...HEAT_LEVEL.map((v) => `×${num(v, 2)}`)],
               ]}
+            />
+            <h3>난방 방식</h3>
+            <p>같은 난방 시간이라도 방식에 따라 배출량이 달라요. 전기 난방은 같은 열을 전기로 낼 때의 전력으로 환산해요.</p>
+            <Table
+              columns={["난방 방식", "배출계수 (kg/m³ 환산)"]}
+              rows={Object.entries(DETAIL.heatingEf).map(([k, v]) => [optionLabel("heatingType", k), num(v, 2)])}
             />
             <h3>함께 사는 인원</h3>
             <p>
@@ -175,8 +211,12 @@ export default function MethodPage() {
             />
           </section>
 
-          <section id="m-food" className="card m-sec">
-            <h2>🍚 식생활</h2>
+          <section id="m-food" className={secClass("food")}>
+            <h2>
+              <button type="button" className="m-sec-toggle" aria-expanded={openSecs.includes("food")} onClick={() => toggleSec("food")}>
+                🍚 식생활
+              </button>
+            </h2>
             <div className="formula">
               기본 식단 {num(FOOD.base)}kg + 주 육류 횟수 × 52주 × {FOOD.meatServing}kg + 주 배달·외식 횟수 × 52주 ×{" "}
               {FOOD.mealOverhead}kg
@@ -195,8 +235,12 @@ export default function MethodPage() {
             />
           </section>
 
-          <section id="m-goods" className="card m-sec">
-            <h2>🛍️ 소비</h2>
+          <section id="m-goods" className={secClass("goods")}>
+            <h2>
+              <button type="button" className="m-sec-toggle" aria-expanded={openSecs.includes("goods")} onClick={() => toggleSec("goods")}>
+                🛍️ 소비
+              </button>
+            </h2>
             <Table
               columns={["항목", "계산", "비고"]}
               rows={[
@@ -215,8 +259,12 @@ export default function MethodPage() {
             />
           </section>
 
-          <section id="m-detail" className="card m-sec">
-            <h2>✍️ 자세히 입력</h2>
+          <section id="m-detail" className={secClass("detail")}>
+            <h2>
+              <button type="button" className="m-sec-toggle" aria-expanded={openSecs.includes("detail")} onClick={() => toggleSec("detail")}>
+                ✍️ 자세히 입력
+              </button>
+            </h2>
             <p>
               간편 입력의 각 문항은 '자세히 입력'을 펼쳐 정확한 값을 넣을 수 있어요. 펼치면 간편 입력의 답으로 정한 기본값이
               보이고, 값을 하나라도 바꾸면 그 문항은 <strong>자세히 입력한 값이 간편 입력보다 우선</strong>해요. 그렇게 계산한
@@ -241,16 +289,21 @@ export default function MethodPage() {
                 ],
                 ["장거리 이동", "연 왕복 횟수, 수단", `횟수 × ${HOME_TRIPS.roundTripKm}km × 수단별 계수`],
                 ["항공", "거리대별 왕복 횟수", "횟수 × 왕복 거리 × 거리대별 계수"],
-                ["거주 형태", "난방 방식", "난방 항목의 계수를 난방 방식에 맞게 바꿈"],
+                ["거주 형태", "월평균 전기·가스 요금", "요금을 사용량으로 환산해 전기·냉난방·온수 항목을 그 사용량에 맞춰 조정"],
                 [
                   "동거 인원",
                   "정확한 인원, 나의 부담 비율(2명 이상)",
                   "가구 에너지(1인 기준 × (1 + 0.25 × (인원 − 1))) × 나의 부담 비율. 비우면 인원수로 똑같이 나눔",
                 ],
                 [
-                  "냉난방",
-                  "하루 사용 시간·사용 월수, 월평균 전기·가스 요금",
-                  `'보통' = 냉방 ${DETAIL.coolRef.hours}시간×${DETAIL.coolRef.months}개월, 난방 ${DETAIL.heatRef.hours}시간×${DETAIL.heatRef.months}개월을 기준으로 배수 계산. 요금을 넣으면 전기·가스 항목을 그 사용량에 맞춰 조정`,
+                  "냉방",
+                  "하루 사용 시간, 사용 월수",
+                  `기준(${DETAIL.coolRef.hours}시간 × ${DETAIL.coolRef.months}개월) 대비 배수로 계산`,
+                ],
+                [
+                  "난방",
+                  "하루 사용 시간, 사용 월수",
+                  `기준(${DETAIL.heatRef.hours}시간 × ${DETAIL.heatRef.months}개월) 대비 배수로 계산. 난방 방식은 간편 입력에서 고름`,
                 ],
                 ["육류", "소·돼지·닭·생선 주 횟수", "종류별 1회 배출량으로 계산"],
                 ["배달·외식", "장소별 주 끼니 수", "장소별로 더해지는 조리·운송 배출로 계산"],
@@ -281,12 +334,6 @@ export default function MethodPage() {
                     .join(" · "),
                 ],
                 [
-                  "난방 방식 (kg/m³ 환산)",
-                  Object.entries(DETAIL.heatingEf)
-                    .map(([k, v]) => `${{ gas: "가스보일러", electric: "전기", district: "지역·중앙", unknown: "모름" }[k]} ${num(v, 2)}`)
-                    .join(" · "),
-                ],
-                [
                   "요금 → 사용량",
                   `전기 ${DETAIL.wonPerKwh}원/kWh · 가스 ${num(DETAIL.wonPerM3)}원/m³ (요금 중 나의 몫 = 나의 부담 비율, 없으면 인원수로 나눔)`,
                 ],
@@ -306,8 +353,12 @@ export default function MethodPage() {
             />
           </section>
 
-          <section id="m-range" className="card m-sec">
-            <h2>↔️ 범위는 이렇게 계산해요</h2>
+          <section id="m-range" className={secClass("range")}>
+            <h2>
+              <button type="button" className="m-sec-toggle" aria-expanded={openSecs.includes("range")} onClick={() => toggleSec("range")}>
+                ↔️ 범위는 이렇게 계산해요
+              </button>
+            </h2>
             <p>
               대표값이 실제와 다를 수 있는 정도(상대 불확도)를 항목마다 정하고, 항목들의 오차가 서로 독립이라고 보아 제곱합의
               제곱근으로 합쳤어요. 결과 화면의 범위는 <strong>추정값 ± 이 오차</strong>예요.
@@ -326,8 +377,12 @@ export default function MethodPage() {
             </p>
           </section>
 
-          <section id="m-limits" className="card m-sec">
-            <h2>아직 다루지 않는 것</h2>
+          <section id="m-limits" className={secClass("limits")}>
+            <h2>
+              <button type="button" className="m-sec-toggle" aria-expanded={openSecs.includes("limits")} onClick={() => toggleSec("limits")}>
+                아직 다루지 않는 것
+              </button>
+            </h2>
             <ul className="m-list">
               <li>전자기기 구매, 교재, 디지털 활동, 가전별 사용 시간</li>
               <li>방학 중 통학, 구간별 이동, 주말·여가 이동</li>

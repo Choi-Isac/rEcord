@@ -53,9 +53,13 @@ export const HOUSING = {
 // 한 명이 늘 때마다 가구 에너지가 25%씩 는다고 보고, 이를 인원수로 나눈다
 export const EXTRA_PERSON_SHARE = 0.25;
 
-// 냉난방 슬라이더 1~5단계(3 = 보통)의 사용량 배수
-export const COOL_LEVEL = [0.3, 0.6, 1, 1.5, 2.1];
-export const HEAT_LEVEL = [0.5, 0.75, 1, 1.3, 1.65];
+// 냉난방: 간편 입력은 하루 사용 시간 5칸(1~5). HOUSING의 냉방·난방 사용량은 기준 사용 패턴
+// (하루 6시간 × 냉방 3개월·난방 4개월)일 때의 값이고, 칸마다 하루 시간 ÷ 기준 시간만큼 늘리거나 줄인다
+export const CLIMATE_HOURS = [2, 4, 6, 9, 12]; // 마지막 칸 = 12시간 이상
+export const COOL_REF = { hours: 6, months: 3 };
+export const HEAT_REF = { hours: 6, months: 4 };
+export const COOL_LEVEL = CLIMATE_HOURS.map((h) => h / COOL_REF.hours);
+export const HEAT_LEVEL = CLIMATE_HOURS.map((h) => h / HEAT_REF.hours);
 
 // ── 식생활 ────────────────────────────────────
 
@@ -117,9 +121,9 @@ export const DETAIL = {
   // 난방 방식별 '도시가스 m³ 환산량' 1단위당 배출량, kg
   //   전기 난방: 1m³ 환산 × 10.4kWh × 전력 계수 / 지역·중앙난방: 열병합 평균으로 가스의 약 0.75배
   heatingEf: { gas: EF.gas, electric: KWH_PER_M3 * EF.electricity, district: 0.75 * EF.gas, unknown: EF.gas },
-  // 냉난방 '보통'(간편 3단계)에 해당하는 사용 패턴: 하루 시간 × 사용 월수
-  coolRef: { hours: 6, months: 3 },
-  heatRef: { hours: 8, months: 4 },
+  // 냉난방 기준 사용 패턴(간편 입력의 하루 6시간 칸): 하루 시간 × 사용 월수
+  coolRef: COOL_REF,
+  heatRef: HEAT_REF,
   // 요금(원) → 사용량 환산 단가 (누진·기본요금 포함 평균)
   wonPerKwh: 160,
   wonPerM3: 1100,

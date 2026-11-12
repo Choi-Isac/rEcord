@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import PageHead from "../components/PageHead.jsx";
 import ChartCard from "../components/charts/ChartCard.jsx";
@@ -19,6 +19,52 @@ import "./Result.css";
 
 const REFERENCE = calculate(REFERENCE_ANSWERS).total.value;
 const catLabel = (key) => CATEGORIES.find((c) => c.key === key).label;
+
+// 옆 카드(target)와 높이가 같아지도록 내용을 접어 두고, 버튼으로 모두 펼친다.
+// 카드가 위아래로 놓이는 좁은 화면(휴대폰)에서는 앞의 fallbackRows줄(rowSelector)만 보여 준다
+function FitToCard({ target, moreLabel, fallbackRows, rowSelector, children }) {
+  const bodyRef = useRef(null);
+  const [limit, setLimit] = useState(null); // 접었을 때 본문 최대 높이(px), null = 접지 않음
+  const [open, setOpen] = useState(false);
+
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    const card = body?.closest(".chart-card");
+    if (!body || !card || !target.current || typeof ResizeObserver === "undefined") return;
+    const update = () => {
+      const side = target.current;
+      if (!side || side.offsetTop !== card.offsetTop) {
+        const rows = fallbackRows ? body.querySelectorAll(rowSelector) : [];
+        // 한 줄만 더 남는 경우에는 접지 않는다
+        if (rows.length <= fallbackRows + 1) return setLimit(null);
+        const last = rows[fallbackRows - 1];
+        return setLimit(last.offsetTop + last.offsetHeight + 4);
+      }
+      // 카드에서 본문을 뺀 높이(제목·버튼·여백)는 그대로 두고, 남는 높이만큼 본문을 보여 준다
+      const room = side.offsetHeight - (card.offsetHeight - body.offsetHeight);
+      setLimit(body.scrollHeight > room + 1 ? Math.max(room, 120) : null);
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(target.current);
+    observer.observe(card);
+    update();
+    return () => observer.disconnect();
+  }, [target, fallbackRows, rowSelector]);
+
+  const clamped = limit !== null && !open;
+  return (
+    <>
+      <div ref={bodyRef} className={clamped ? "fit-body is-clamped" : "fit-body"} style={clamped ? { maxHeight: limit } : undefined}>
+        {children}
+      </div>
+      {limit !== null && (
+        <button type="button" className="fit-toggle" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+          {open ? "접기 ▴" : `${moreLabel} ▾`}
+        </button>
+      )}
+    </>
+  );
+}
 
 // 0톤부터의 눈금 위에 나의 추정 범위, 기준 예시, 2030 목표를 함께 표시
 function RangeScale({ total }) {
@@ -56,69 +102,133 @@ const FEEDBACK_QS = [
 ];
 const WISH_MAX = 500;
 
+// 보낸 피드백에서 지금 문항에 해당하는 답만 꺼낸다 (문항을 바꾸기 전 피드백은 일부만 채워짐)
+const scoresOf = (fb) =>
+  Object.fromEntries(FEEDBACK_QS.filter((q) => LIKERT.includes(fb?.[q.id])).map((q) => [q.id, fb[q.id]]));
+
+// 피드백 활용 안내: 피드백은 통계·연구 활용 동의와 관계없이 서버로 보낸다 (remote.js)
+const FEEDBACK_POLICY =
+  "제출된 의견은 통계·연구 활용 동의 여부와 관계없이 개인 식별 정보 없이 서버에 저장되며, 계산기 개선에 활용됩니다.";
+
+// 질문은 접어 두고 제목 옆 버튼으로 펼친다. 접어도 고른 답은 남는다
 function Feedback({ record, onSubmit }) {
+  const [editing, setEditing] = useState(false);
+  const [open, setOpen] = useState(false);
   const [f, setF] = useState({});
   const [wish, setWish] = useState("");
-  if (record.feedback) {
+
+  // 다시 입력: 보냈던 답을 채워 둔 채로 펼친다
+  const startEdit = () => {
+    setF(scoresOf(record.feedback));
+    setWish(record.feedback.wish ?? "");
+    setEditing(true);
+    setOpen(true);
+  };
+
+  if (record.feedback && !editing) {
     return (
       <div className="card feedback is-done">
         <h3>의견 고마워요!</h3>
-        <p>보내 주신 응답은 계산기를 고치는 데 쓰여요.</p>
+        <p>{FEEDBACK_POLICY}</p>
+        <button type="button" className="btn btn-ghost btn-sm fb-again" onClick={startEdit}>
+          다시 입력하기
+        </button>
       </div>
     );
   }
-  const complete = FEEDBACK_QS.every((q) => f[q.id] != null);
+  const answered = FEEDBACK_QS.filter((q) => f[q.id] != null).length;
+  const complete = answered === FEEDBACK_QS.length;
+  const submit = () => {
+    onSubmit({ ...f, wish: wish.trim() || null, submittedAt: new Date().toISOString() });
+    setEditing(false);
+  };
+  const title = editing ? "의견 다시 입력하기" : "계산기는 어땠나요?";
+
+  // 접힌 모습: 옆의 '포인트 받고 줄이기'와 같은 짜임(제목 · 설명 · 작은 제목과 입력 칸 · 작은 안내)
+  if (!open) {
+    return (
+      <div className="card feedback">
+        <h3>{title}</h3>
+        <p className="feedback-sub">결과를 보고 느낀 점을 알려 주세요.</p>
+        <div className="fb-start">
+          <span>
+            질문 {FEEDBACK_QS.length}개 · 약 30초{answered > 0 && ` · ${answered}개 답함`}
+          </span>
+          <button type="button" className="btn btn-primary fb-open" aria-expanded={false} aria-controls="fb-body" onClick={() => setOpen(true)}>
+            {answered ? "이어서 답하기" : "의견 남기기"} ▾
+          </button>
+        </div>
+        <p className="fb-note">{FEEDBACK_POLICY}</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="card feedback">
-      <h3>계산기는 어땠나요?</h3>
-      <p className="feedback-sub">{FEEDBACK_QS.length}개 질문, 30초면 끝나요. 계산기를 고치는 데만 써요.</p>
-      {FEEDBACK_QS.map((q) => (
-        <fieldset key={q.id} className="fb-q">
-          <legend>{q.label}</legend>
-          <div className="fb-scale">
-            <div className="fb-opts">
-              {LIKERT.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  className="pill"
-                  aria-pressed={f[q.id] === v}
-                  aria-label={`${v}점${v === 1 ? ` (${q.ends[0]})` : v === 5 ? ` (${q.ends[1]})` : ""}`}
-                  onClick={() => setF((s) => ({ ...s, [q.id]: v }))}
-                >
-                  {v}
-                </button>
-              ))}
+    <div className="card feedback is-open">
+      <div className="fb-head">
+        <h3>{title}</h3>
+        <button type="button" className="fb-toggle" aria-expanded={true} aria-controls="fb-body" onClick={() => setOpen(false)}>
+          접기 ▴
+        </button>
+      </div>
+      <p className="feedback-sub">
+        {editing
+          ? "보냈던 답이 채워져 있어요. 고친 뒤 다시 보내면 새 답으로 바뀌어요."
+          : `${FEEDBACK_QS.length}개 질문, 30초면 끝나요.`}{" "}
+        {FEEDBACK_POLICY}
+      </p>
+      <div id="fb-body">
+        {FEEDBACK_QS.map((q) => (
+          <fieldset key={q.id} className="fb-q">
+            <legend>{q.label}</legend>
+            <div className="fb-scale">
+              <div className="fb-opts">
+                {LIKERT.map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    className="pill"
+                    aria-pressed={f[q.id] === v}
+                    aria-label={`${v}점${v === 1 ? ` (${q.ends[0]})` : v === 5 ? ` (${q.ends[1]})` : ""}`}
+                    onClick={() => setF((s) => ({ ...s, [q.id]: v }))}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+              <div className="fb-ends" aria-hidden="true">
+                <span>1 = {q.ends[0]}</span>
+                <span>5 = {q.ends[1]}</span>
+              </div>
             </div>
-            <div className="fb-ends" aria-hidden="true">
-              <span>1 = {q.ends[0]}</span>
-              <span>5 = {q.ends[1]}</span>
-            </div>
-          </div>
-        </fieldset>
-      ))}
-      <label className="fb-q fb-wish">
-        <span className="fb-wish-label">추가되었으면 하는 기능이 있나요? (선택)</span>
-        <textarea
-          className="input"
-          rows={3}
-          maxLength={WISH_MAX}
-          value={wish}
-          placeholder="예: 친구와 결과 비교하기, 지난 학기와 변화 그래프"
-          onChange={(e) => setWish(e.target.value)}
-        />
-        <span className="fb-count">
-          {wish.length}/{WISH_MAX}
-        </span>
-      </label>
-      <button
-        className="btn btn-primary btn-sm"
-        disabled={!complete}
-        onClick={() => onSubmit({ ...f, wish: wish.trim() || null, submittedAt: new Date().toISOString() })}
-      >
-        보내기
-      </button>
-      {!complete && <p className="fb-hint">점수 문항 {FEEDBACK_QS.length}개에 모두 답하면 보낼 수 있어요.</p>}
+          </fieldset>
+        ))}
+        <label className="fb-q fb-wish">
+          <span className="fb-wish-label">추가되었으면 하는 기능이 있나요? (선택)</span>
+          <textarea
+            className="input"
+            rows={3}
+            maxLength={WISH_MAX}
+            value={wish}
+            placeholder="예: 친구와 결과 비교하기, 지난 학기와 변화 그래프"
+            onChange={(e) => setWish(e.target.value)}
+          />
+          <span className="fb-count">
+            {wish.length}/{WISH_MAX}
+          </span>
+        </label>
+        <div className="fb-actions">
+          <button className="btn btn-primary btn-sm" disabled={!complete} onClick={submit}>
+            {editing ? "다시 보내기" : "보내기"}
+          </button>
+          {editing && (
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(false)}>
+              취소
+            </button>
+          )}
+        </div>
+        {!complete && <p className="fb-hint">점수 문항 {FEEDBACK_QS.length}개에 모두 답하면 보낼 수 있어요.</p>}
+      </div>
     </div>
   );
 }
@@ -164,11 +274,14 @@ export default function ResultPage() {
   const navigate = useNavigate();
   const { responses, update } = useResponses();
   const [, setDraft] = useDraft();
+  const [allCompare, setAllCompare] = useState(false); // 휴대폰: 비교 문장을 모두 보여 줄지
+  const [openTip, setOpenTip] = useState(null); // 휴대폰: 설명을 펼친 제안
+  const categoryCard = useRef(null); // 영역별 기여도 카드 (항목별 배출량이 이 높이에 맞춘다)
 
   const idx = id ? responses.findIndex((r) => r.id === id) : responses.length - 1;
   const record = responses[idx];
 
-  // 연구 활용에 동의한 응답은 서버에도 보낸다. 지역을 바꾸는 동안에는 기다렸다가 한 번에 보낸다
+  // 연구 활용에 동의한 응답과 피드백은 서버에도 보낸다. 지역을 바꾸는 동안에는 기다렸다가 한 번에 보낸다
   useEffect(() => {
     if (!record || !shouldSync(record)) return;
     const timer = setTimeout(async () => {
@@ -256,12 +369,15 @@ export default function ResultPage() {
               <small>톤 CO₂e/년</small>
             </div>
             <p className="hero-range">
-              실제 값은 대략 <strong>{toTon(total.low)}~{toTon(total.high)}톤</strong> 사이일 가능성이 높아요.
+              <span className="only-desktop">실제 값은 대략 </span>
+              <span className="only-mobile">가능성이 높은 범위 </span>
+              <strong>{toTon(total.low)}~{toTon(total.high)}톤</strong>
+              <span className="only-desktop"> 사이일 가능성이 높아요.</span>
             </p>
             <RangeScale total={total} />
-            <ul className="hero-compare">
+            <ul className={allCompare ? "hero-compare is-all" : "hero-compare"}>
               {simpleTotal !== null && (
-                <li>
+                <li className="is-extra">
                   간편 입력만으로 계산하면 {toTon(simpleTotal)}톤 → 자세히 입력을 반영해{" "}
                   <strong>
                     {Math.abs(total.value - simpleTotal) < 50
@@ -271,12 +387,12 @@ export default function ResultPage() {
                 </li>
               )}
               <li>
-                기준 예시(가상의 대학생) {toTon(REFERENCE)}톤보다{" "}
+                기준 예시<span className="only-desktop">(가상의 대학생)</span> {toTon(REFERENCE)}톤보다{" "}
                 <strong className={vsRef <= 0 ? "delta-good" : "delta-bad"}>
                   {num(Math.abs(vsRef))}% {vsRef <= 0 ? "적어요" : "많아요"}
                 </strong>
               </li>
-              <li>
+              <li className="is-extra">
                 1.5℃ 목표에 맞춘 2030년 1인 생활 탄소발자국 {toTon(TARGET_2030_KG)}톤의{" "}
                 <strong>{num(total.value / TARGET_2030_KG, 1)}배</strong>
               </li>
@@ -291,6 +407,11 @@ export default function ResultPage() {
                 </li>
               )}
             </ul>
+            {!allCompare && (
+              <button type="button" className="link-btn compare-more" onClick={() => setAllCompare(true)}>
+                비교 {simpleTotal !== null ? 2 : 1}개 더 보기
+              </button>
+            )}
           </div>
           <div className="trees">
             <span className="trees-icon" aria-hidden="true">
@@ -298,7 +419,10 @@ export default function ResultPage() {
             </span>
             <div>
               <strong>소나무 {num(Math.round(total.value / PINE_KG_PER_YEAR))}그루</strong>
-              <p>가 1년 동안 흡수해야 하는 양이에요</p>
+              <p>
+                <span className="only-desktop">가 1년 동안 흡수해야 하는 양이에요</span>
+                <span className="only-mobile">가 1년 동안 흡수할 양</span>
+              </p>
             </div>
           </div>
         </section>
@@ -306,6 +430,7 @@ export default function ResultPage() {
         {/* 영역별 기여도 */}
         <div className="result-grid">
           <ChartCard
+            cardRef={categoryCard}
             title="영역별 기여도"
             subtitle="단위 kg CO₂e/년 · 추정값"
             table={{
@@ -337,11 +462,13 @@ export default function ResultPage() {
               ]),
             }}
           >
-            <HBarChart items={shownItems} unit="kg" format={roundKg} />
-            <p className="items-note">
-              기본 식단(곡물·채소·유제품 등)은 모든 사람에게 같은 값이라 순위에서 빼고 맨 아래에 두었어요. 영역별 합계에는
-              포함돼요.
-            </p>
+            <FitToCard target={categoryCard} moreLabel={`항목 ${shownItems.length}개 모두 보기`} fallbackRows={5} rowSelector=".hbar-row">
+              <HBarChart items={shownItems} unit="kg" format={roundKg} />
+              <p className="items-note">
+                기본 식단(곡물·채소·유제품 등)은 모든 사람에게 같은 값이라 순위에서 빼고 맨 아래에 두었어요. 영역별 합계에는
+                포함돼요.
+              </p>
+            </FitToCard>
           </ChartCard>
         </div>
 
@@ -356,7 +483,7 @@ export default function ResultPage() {
                 {roundKg(biggest.value)}kg · 전체의 {num((biggest.value / total.value) * 100)}%
               </span>
             </h2>
-            <p>
+            <p className="biggest-note">
               {ITEM_NOTES[biggest.key]}
               {suggestions[0]?.isFocus && " 아래 첫 번째 제안이 이 항목을 줄이는 방법이에요."}
             </p>
@@ -367,7 +494,7 @@ export default function ResultPage() {
             <>
               <ol className="suggestions">
                 {suggestions.map((s) => (
-                  <li key={s.id} className={s.isFocus ? "is-focus" : ""}>
+                  <li key={s.id} className={`${s.isFocus ? "is-focus" : ""}${openTip === s.id ? " is-open" : ""}`}>
                     <span className="sg-icon" aria-hidden="true">
                       {s.icon}
                     </span>
@@ -377,10 +504,21 @@ export default function ResultPage() {
                         {itemLabel(s.item)} 줄이기
                       </span>
                       <strong>{s.title}</strong>
-                      <p>{s.desc}</p>
+                      <p className="sg-desc">{s.desc}</p>
+                      <button
+                        type="button"
+                        className="link-btn sg-more"
+                        aria-expanded={openTip === s.id}
+                        onClick={() => setOpenTip((id) => (id === s.id ? null : s.id))}
+                      >
+                        {openTip === s.id ? "접기" : "방법 보기"}
+                      </button>
                     </div>
                     <span className="sg-saving">
-                      연 약 <b>{roundKg(s.saving)}kg</b> 감축
+                      <span className="only-desktop">연 약 </span>
+                      <b>{roundKg(s.saving)}kg</b>
+                      <span className="only-desktop"> 감축</span>
+                      <span className="only-mobile">/년</span>
                     </span>
                   </li>
                 ))}
@@ -413,9 +551,15 @@ export default function ResultPage() {
         </div>
 
         <p className="disclaimer">
-          <span className="badge-est">추정</span> 간편 입력의 칩·슬라이더 대표값과 잠정 배출계수({FACTOR_VERSION})로 계산한 값이에요.
-          범위는 대표값의 불확도를 합쳐 계산했어요. 기준 예시는 가상의 대학생 응답이며, 파일럿 이후 실제 응답 평균으로 바뀔
-          예정이에요. 소나무 흡수량은 30년생 소나무 1그루 기준 연 {PINE_KG_PER_YEAR}kg(국립산림과학원)이에요.
+          <span className="badge-est">추정</span>{" "}
+          <span className="only-desktop">
+            간편 입력의 칩·슬라이더 대표값과 잠정 배출계수({FACTOR_VERSION})로 계산한 값이에요. 범위는 대표값의 불확도를 합쳐
+            계산했어요. 기준 예시는 가상의 대학생 응답이며, 파일럿 이후 실제 응답 평균으로 바뀔 예정이에요. 소나무 흡수량은 30년생
+            소나무 1그루 기준 연 {PINE_KG_PER_YEAR}kg(국립산림과학원)이에요.
+          </span>
+          <span className="only-mobile">
+            대표값과 잠정 배출계수({FACTOR_VERSION})로 계산한 값이에요. 계산 기준은 '어떻게 계산했나요?'에 있어요.
+          </span>
         </p>
       </div>
     </>

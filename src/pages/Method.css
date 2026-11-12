@@ -32,6 +32,15 @@
   .m-toc { position: static; display: flex; flex-wrap: wrap; gap: 4px; }
   .m-toc a { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; }
 }
+/* 절 제목 버튼: PC에서는 그냥 제목, 휴대폰에서는 눌러서 절을 펼치고 접는다 */
+.m-sec-toggle { all: unset; }
+.m-sec-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 @media (max-width: 640px) {
   .m-sec { padding: 20px 18px; }
+  .m-sec-toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; cursor: pointer; }
+  .m-sec-toggle::after { content: "▾"; font-size: 14px; color: var(--ink-3); }
+  .m-sec.is-open .m-sec-toggle::after { content: "▴"; }
+  .m-sec:not(.is-open) h2 { margin-bottom: 0; }
+  .m-sec:not(.is-open) > :not(h2) { display: none; }
 }

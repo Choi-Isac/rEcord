@@ -15,7 +15,7 @@ const AREA_QUESTIONS = Object.fromEntries(
 );
 
 const STEPS = [
-  { title: "고르기", desc: "칩을 고르고 슬라이더를 움직여 생활 습관 13가지에 답해요." },
+  { title: "고르기", desc: `칩을 고르고 슬라이더를 움직여 생활 습관 ${QUESTIONS.length}가지에 답해요.` },
   { title: "확인하기", desc: "연간 배출량과 범위, 영역별 기여도, 가장 큰 항목을 봐요." },
   { title: "줄이기", desc: "내 답에서 효과가 큰 감축 행동 3가지와 받을 수 있는 포인트를 알려드려요." },
 ];
@@ -24,7 +24,7 @@ const TRUST = [
   { icon: "📐", title: "계산식을 모두 공개해요", desc: "배출계수와 칩마다 쓰는 대표값을 계산 방법 페이지에 그대로 실었어요." },
   { icon: "↔️", title: "범위로 보여 드려요", desc: "간편 입력은 대표값을 쓰기 때문에, 한 숫자 대신 가능성이 높은 범위를 함께 표시해요." },
   { icon: "🏷️", title: "'추정' 값을 구분해요", desc: "대표값으로 계산한 값에는 '추정' 배지를 붙여, 직접 입력한 값과 구분해요." },
-  { icon: "🔒", title: "이름·연락처는 묻지 않아요", desc: "입력값은 내 브라우저에 저장되고, 통계·연구 활용에 동의했을 때만 이름 없이 서버에 모아요." },
+  { icon: "🔒", title: "개인 식별 정보를 수집하지 않습니다", desc: "입력 정보는 이용 중인 브라우저에 저장되며, 통계·연구 활용에 동의한 경우에 한해 개인 식별 정보 없이 서버에 저장됩니다." },
 ];
 
 export default function HomeClassic() {
@@ -44,8 +44,11 @@ export default function HomeClassic() {
               나의 탄소발자국
             </h1>
             <p className="lead">
-              통학·주거·식생활·소비에 관한 {QUESTIONS.length}가지 질문에 답하면 1년 동안의 탄소 배출량과 가장 효과적인
-              감축 방법을 알려드려요.
+              <span className="only-desktop">
+                통학·주거·식생활·소비에 관한 {QUESTIONS.length}가지 질문에 답하면 1년 동안의 탄소 배출량과 가장 효과적인
+                감축 방법을 알려드려요.
+              </span>
+              <span className="only-mobile">{QUESTIONS.length}가지 질문으로 1년 탄소 배출량과 줄이는 방법을 알려드려요.</span>
             </p>
             <div className="hero-actions">
               <Link className="btn btn-light" to="/calculator">
@@ -101,11 +104,20 @@ export default function HomeClassic() {
                 </span>
                 <h3>{c.label}</h3>
               </div>
-              <ul>
+              <ul className="only-desktop">
                 {AREA_QUESTIONS[c.key].map((label) => (
                   <li key={label}>{label}</li>
                 ))}
               </ul>
+              {/* 휴대폰: 질문 목록은 접어 둔다 */}
+              <details className="area-qs only-mobile-block">
+                <summary>질문 {AREA_QUESTIONS[c.key].length}개 보기</summary>
+                <ul>
+                  {AREA_QUESTIONS[c.key].map((label) => (
+                    <li key={label}>{label}</li>
+                  ))}
+                </ul>
+              </details>
             </div>
           ))}
         </div>
@@ -141,7 +153,7 @@ export default function HomeClassic() {
               <span aria-hidden="true">{t.icon}</span>
               <div>
                 <h3>{t.title}</h3>
-                <p>{t.desc}</p>
+                <p className="only-desktop">{t.desc}</p>
               </div>
             </div>
           ))}
