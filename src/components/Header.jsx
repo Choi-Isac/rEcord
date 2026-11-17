@@ -1,32 +1,8 @@
 import { Link, NavLink } from "react-router-dom";
 import { NAV } from "../lib/nav.js";
-import { HOME_DESIGNS, useHomeDesign } from "../lib/design.jsx";
 import { useAuth } from "../lib/auth.jsx";
 import logo from "../img/rEcord_crimson-dot.svg";
 import "./Header.css";
-
-// 사이트 디자인 전환(메인 구성 + 전체 색 테마): 넓은 화면은 버튼 묶음, 좁은 화면은 선택 상자
-function DesignSwitch() {
-  const [design, setDesign] = useHomeDesign();
-  return (
-    <div className="design-switch">
-      <div className="design-seg" role="group" aria-label="사이트 디자인">
-        {HOME_DESIGNS.map((d) => (
-          <button key={d.key} aria-pressed={design === d.key} title={d.desc} onClick={() => setDesign(d.key)}>
-            {d.label}
-          </button>
-        ))}
-      </div>
-      <select className="design-select" aria-label="사이트 디자인" value={design} onChange={(e) => setDesign(e.target.value)}>
-        {HOME_DESIGNS.map((d) => (
-          <option key={d.key} value={d.key}>
-            디자인: {d.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
 
 export default function Header() {
   const { enabled, user } = useAuth();
@@ -37,8 +13,6 @@ export default function Header() {
           <img className="logo-img" src={logo} alt="rEcord" width="700" height="218" />
         </Link>
 
-        <DesignSwitch />
-
         <nav className="menu" aria-label="주 메뉴">
           {NAV.map((item) => (
             <NavLink key={item.to} to={item.to} className="menu-link">
@@ -46,7 +20,6 @@ export default function Header() {
             </NavLink>
           ))}
         </nav>
-        {/* 계정 링크는 메뉴 밖에 둔다: 아주 좁은 화면에서는 둘째 줄(디자인 선택 옆)로 내려간다 */}
         {enabled && (
           <NavLink to="/account" className="menu-link menu-account">
             {user ? "내 계정" : "로그인"}

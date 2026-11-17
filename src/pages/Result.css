@@ -174,15 +174,9 @@
   .disclaimer { font-size: 11px; text-align: left; }
 }
 
-/* ── 테마별 마감 ── */
-[data-theme="footprint"] .hero { background: linear-gradient(180deg, #f1f7f3 0%, var(--surface) 70%); box-shadow: 0 18px 48px rgba(31, 60, 45, .08); }
-[data-theme="footprint"] .suggestions li { background: var(--accent-soft); }
-[data-theme="story"] .hero { border-top: 4px solid var(--accent); }
-[data-theme="story"] .hero-value { font-size: 72px; letter-spacing: -.05em; color: var(--accent-dark); }
-[data-theme="story"] .sg-saving b { font-size: 20px; }
-@media (max-width: 640px) {
-  [data-theme="story"] .hero-value { font-size: 52px; }
-}
+/* ── 마감: 메인 화면처럼 옅은 초록 ── */
+.hero { background: linear-gradient(180deg, #f1f7f3 0%, var(--surface) 70%); box-shadow: 0 18px 48px rgba(31, 60, 45, .08); }
+.suggestions li { background: var(--accent-soft); }
 
 /* 항목별 배출량: 영역별 기여도 카드 높이에 맞춰 접어 두고, 아래를 흐리게 해 더 있다는 것을 보여 준다 */
 .fit-body { position: relative; overflow: hidden; }

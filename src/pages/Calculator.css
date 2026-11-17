@@ -296,18 +296,9 @@
 .prefill-note { margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--green-soft); font-size: 14px; color: var(--green); font-weight: 600; }
 .prefill-note .link-btn { font-size: 13px; color: var(--green); }
 
-/* ── 테마별 마감 (메인 화면 디자인과 같은 느낌) ── */
-/* 발자국: 메인 미리보기처럼 둥근 알약형 칩, 고르면 초록으로 채움 */
-[data-theme="footprint"] .chip-opt { border-radius: 99px; padding: 9px 14px; }
-[data-theme="footprint"] .chip-opt.is-selected { background: var(--accent); border-color: var(--accent); color: #fff; }
-[data-theme="footprint"] .chip-opt.is-selected .chip-text small { color: rgba(255,255,255,.8); }
-[data-theme="footprint"] .mode-card.is-available,
-[data-theme="footprint"] .live { box-shadow: 0 18px 48px rgba(31, 60, 45, .08); }
-
-/* 인포그래픽: 짙은 초록 채움과 굵은 숫자 */
-[data-theme="story"] .chip-opt.is-selected { background: var(--accent); border-color: var(--accent); color: #fff; }
-[data-theme="story"] .chip-opt.is-selected .chip-text small { color: rgba(255,255,255,.75); }
-[data-theme="story"] .q-num { background: var(--accent); color: #fff; }
-/* 실시간 패널은 영역 색(밝은 배경에서 검증된 팔레트) 때문에 밝게 두고 윗변만 강조 */
-[data-theme="story"] .live { border-top: 4px solid var(--accent); }
-[data-theme="story"] .live-value { color: var(--accent-dark); }
+/* ── 마감: 메인 화면처럼 둥근 알약형 칩, 고르면 초록으로 채움 ── */
+.chip-opt { border-radius: 99px; padding: 9px 14px; }
+.chip-opt.is-selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip-opt.is-selected .chip-text small { color: rgba(255,255,255,.8); }
+.mode-card.is-available,
+.live { box-shadow: 0 18px 48px rgba(31, 60, 45, .08); }

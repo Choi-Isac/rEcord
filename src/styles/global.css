@@ -27,20 +27,7 @@
   --good: #1f7a4a;
   --bad: #b8451a;
 
-  /* 테마 변수: 버튼·선택·강조에 쓰는 색과 하위 페이지 머리말. 기본값은 '기본' 테마(크림슨) */
-  --accent: var(--crimson);
-  --accent-dark: var(--crimson-dark);
-  --accent-soft: var(--crimson-soft);
-  --head-bg:
-    radial-gradient(circle at 90% 0%, rgba(255,255,255,.08) 0 140px, transparent 141px),
-    linear-gradient(135deg, var(--crimson-dark) 0%, var(--crimson) 60%, #7a1d3d 100%);
-  --head-ink: #fff;
-  --head-line: transparent;
-}
-
-/* 메인 화면에서 고른 디자인이 사이트 전체 테마가 된다 (<html data-theme>, lib/design.jsx)
-   차트 색(--viz-*)은 검증된 팔레트라 테마와 무관하게 그대로 둔다 */
-[data-theme="footprint"] {
+  /* 버튼·선택·강조에 쓰는 색과 하위 페이지 머리말 ('발자국' 디자인의 초록) */
   --accent: #2f6b4f;
   --accent-dark: #24563f;
   --accent-soft: #e6f0ea;
@@ -49,18 +36,6 @@
     linear-gradient(180deg, #e6f0ea 0%, #eef5f0 100%);
   --head-ink: var(--ink);
   --head-line: var(--line);
-}
-
-[data-theme="story"] {
-  --accent: #1d4a37;
-  --accent-dark: #123326;
-  --accent-soft: #e2ece5;
-  --bg: #f5f6f2;
-  --line: #e2e5dd;
-  --head-bg:
-    radial-gradient(circle at 88% 10%, rgba(255,255,255,.06) 0 150px, transparent 151px),
-    linear-gradient(160deg, #123326 0%, #1d4a37 70%, #24563f 100%);
-  --head-ink: #fff;
 }
 
 * { box-sizing: border-box; }

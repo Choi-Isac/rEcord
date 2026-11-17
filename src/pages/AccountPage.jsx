@@ -322,8 +322,7 @@ function Flexibility() {
           </button>
         </div>
         <p className="account-note" hidden={!open}>
-          감축 제안을 고를 때 참고해요. <b>불가</b>로 고른 항목은 제안하지 않고, <b>어려움</b>은 다른 제안 뒤로 미뤄요. <b>가능</b>·<b>쉬움</b>은 앞쪽에 먼저 제안하고, <b>쉬움</b>은 조금 더 크게 제안해요.
-          고르지 않은 항목은 보통으로 봐요.
+          바꾸기 쉬운 습관부터 제안하고, 바꿀 수 없는 습관은 제안하지 않아요.
         </p>
         <p className={`account-status is-${state}`} role="status">
           {state === "saving"
