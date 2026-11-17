@@ -5,14 +5,20 @@ import { HashRouter } from "react-router-dom";
 import "./styles/global.css";
 import App from "./App.jsx";
 import { DesignProvider } from "./lib/design.jsx";
+import { AuthProvider } from "./lib/auth.jsx";
+import { RecordsProvider } from "./lib/records.jsx";
 
 // HashRouter: 정적 호스팅(GitHub Pages 등)에서 새로고침해도 404가 나지 않도록
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <DesignProvider>
-      <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <App />
-      </HashRouter>
+      <AuthProvider>
+        <RecordsProvider>
+          <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <App />
+          </HashRouter>
+        </RecordsProvider>
+      </AuthProvider>
     </DesignProvider>
   </React.StrictMode>
 );

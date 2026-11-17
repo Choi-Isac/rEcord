@@ -1,0 +1,27 @@
+.hist { padding: 16px 18px; display: grid; gap: 8px; color: var(--ink); max-width: 420px; }
+.hist-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.hist-head span + span { font-weight: 500; color: var(--ink-3); }
+.hist-main { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 6px; }
+.hist-main strong { font-size: 32px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.hist-main small { font-size: 14px; font-weight: 600; color: var(--ink-2); margin-right: 6px; }
+
+.hist-diff { font-size: 13px; font-weight: 700; color: var(--ink-3); }
+.hist-diff.is-down { color: var(--accent); }
+.hist-diff.is-up { color: #b42318; }
+
+/* 최근 기록 흐름: 26.09.10 3.5 → 26.11.13 3.9 */
+.hist-trend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; font-size: 12px; color: var(--ink-3); }
+.hist-trend li { display: inline-flex; align-items: baseline; gap: 4px; }
+.hist-trend li + li::before { content: "→"; margin: 0 8px; color: var(--ink-3); }
+.hist-trend b { font-size: 14px; color: var(--ink); }
+.hist-trend li:last-child b { color: var(--accent); }
+
+.hist-links { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; font-weight: 700; }
+.hist-links a { color: var(--accent); }
+.hist-links a:hover { text-decoration: underline; }
+
+/* 휴대폰: 흐름은 최근 3개만 (한 줄에 들어가게) */
+@media (max-width: 640px) {
+  .hist-trend li:nth-last-child(n + 4) { display: none; }
+  .hist-trend li:nth-last-child(3)::before { content: none; }
+}

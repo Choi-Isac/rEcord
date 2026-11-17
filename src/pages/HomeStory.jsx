@@ -7,7 +7,8 @@ import { CATEGORIES, REFERENCE_ANSWERS, calculate } from "../lib/carbon/engine.j
 import { COMMUTE, FOOD, GOODS, PINE_KG_PER_YEAR, TARGET_2030_KG } from "../lib/carbon/factors.js";
 import { QUESTIONS } from "../lib/carbon/questions.js";
 import { CAT_COLORS } from "../lib/colors.js";
-import { num, roundKg, toTon } from "../lib/format.js";
+import { num, roundKg, toTon, kgValue } from "../lib/format.js";
+import HistoryCard, { useHistory } from "../components/HistoryCard.jsx";
 import "../components/charts/charts.css";
 import "./HomeStory.css";
 
@@ -118,7 +119,9 @@ function Waffle() {
 }
 
 export default function HomeStory() {
-  const scaleMax = 6000;
+  const history = useHistory();
+  const mine = history?.result.total.value;
+  const scaleMax = Math.max(6000, Math.ceil(((mine ?? 0) * 1.1) / 1000) * 1000); // 내 결과가 크면 눈금을 늘린다
   const pos = (v) => `${(v / scaleMax) * 100}%`;
 
   return (
@@ -145,6 +148,12 @@ export default function HomeStory() {
               <span className="st-scale-mark" style={{ left: pos(TARGET_2030_KG) }}>
                 <span>2030년 1.5℃ 목표 {toTon(TARGET_2030_KG)}톤</span>
               </span>
+              {/* 과거 기록이 있으면 내 최근 결과 위치 */}
+              {history && (
+                <span className="st-scale-me" style={{ left: pos(mine) }}>
+                  <span>내 최근 결과 {toTon(mine)}톤</span>
+                </span>
+              )}
             </div>
             <div className="st-scale-axis">
               <span>0톤</span>
@@ -158,6 +167,7 @@ export default function HomeStory() {
             </Link>
             <span>약 1분 · {QUESTIONS.length}개 항목</span>
           </div>
+          <HistoryCard className="st-hist" />
         </div>
       </section>
 
@@ -218,7 +228,7 @@ export default function HomeStory() {
               <div className="st-choice-head">
                 <h3>{c.title}</h3>
                 <span className="st-diff">
-                  1년에 <strong>{roundKg(c.high.value - c.low.value)}kg</strong> 차이
+                  1년에 <strong>{num(kgValue(c.high.value) - kgValue(c.low.value))}kg</strong> 차이
                 </span>
               </div>
               {[

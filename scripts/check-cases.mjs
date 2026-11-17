@@ -4,6 +4,10 @@
 // 배출계수(src/lib/carbon/factors.js)를 바꾸면 아래 손계산도 함께 고쳐야 한다.
 import { calculate } from "../src/lib/carbon/engine.js";
 import { syncSimple } from "../src/lib/carbon/details.js";
+import { QUESTIONS } from "../src/lib/carbon/questions.js";
+import { ANSWER_GROUPS } from "../src/lib/history.js";
+import { suggest } from "../src/lib/carbon/suggestions.js";
+import { FLEX_EASY, FLEX_ITEMS } from "../src/lib/flexibility.js";
 
 const CASES = [
   {
@@ -216,6 +220,90 @@ for (const [key, want] of Object.entries(SYNC_EXPECTED)) {
   const ok = JSON.stringify(synced[key]) === JSON.stringify(want);
   if (!ok) failed++;
   console.log(`  ${ok ? "✓" : "✗"} ${key.padEnd(15)} ${String(synced[key]).padEnd(10)} 예상 ${want}`);
+}
+
+// '내 기록 변화'의 답 묶음(ANSWER_GROUPS) 검사: 답 하나를 바꾸면 자기 묶음의 배출 항목만 바뀌어야 한다.
+// 그래야 '바뀐 답'의 증감(묶음 항목의 합)이 '항목별 증감'과 맞는다. 계산식이 바뀌어 어긋나면 묶음을 고친다
+{
+  const parts = QUESTIONS.flatMap((q) => (q.parts ?? [q]).map((p) => ({ p, qid: q.id })));
+  const groupOf = (qid) => ANSWER_GROUPS.find((g) => g.questions.includes(qid));
+  const missing = parts.filter(({ qid }) => !groupOf(qid)).map(({ p }) => p.id);
+  let seed = 1;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647; // 같은 결과가 나오도록 고정 난수
+  const pick = (p) => {
+    if (p.steps) return p.steps[Math.floor(rnd() * p.steps.length)]; // 통학 시간처럼 단계 목록을 쓰는 슬라이더
+    if (p.type === "slider") return p.min + Math.floor(rnd() * (p.max - p.min + 1));
+    const o = p.options.map((x) => x.value);
+    const one = () => o[Math.floor(rnd() * o.length)];
+    return p.multiple ? [...new Set([one(), one()])] : one();
+  };
+  const randAns = () => Object.fromEntries(parts.map(({ p }) => [p.id, pick(p)]));
+  const itemsOf = (x) => {
+    const r = calculate(x, {});
+    if (!Number.isFinite(r.total.value)) throw new Error(`답 묶음 검사: 계산값이 숫자가 아님 ${JSON.stringify(x)}`);
+    return Object.fromEntries(r.items.map((i) => [i.key, i.value]));
+  };
+  const leaks = new Set();
+  for (let t = 0; t < 150; t++) {
+    const a = randAns();
+    const b = randAns();
+    const base = itemsOf(a);
+    for (const { p, qid } of parts) {
+      const g = groupOf(qid);
+      if (!g) continue;
+      const got = itemsOf({ ...a, [p.id]: b[p.id] });
+      for (const [key, v] of Object.entries(got))
+        if (Math.abs(v - base[key]) > 1e-9 && !g.items.includes(key)) leaks.add(`${p.id} → ${key}`);
+    }
+  }
+  console.log("\n'내 기록 변화' 답 묶음 (답은 자기 묶음의 배출 항목만 바꿔야 함)");
+  if (missing.length || leaks.size) {
+    failed += missing.length + leaks.size;
+    if (missing.length) console.log(`  ✗ 묶음에 없는 문항: ${missing.join(", ")}`);
+    if (leaks.size) console.log(`  ✗ 묶음 밖 항목을 바꾸는 답: ${[...leaks].join(", ")}`);
+  } else console.log(`  ✓ ${ANSWER_GROUPS.length}개 묶음 모두 자기 항목만 바꿈`);
+}
+
+// 습관 변경 난이도 '쉬움': 큰 버전으로 바꾼 제안(isEasy)은 기본 제안보다 감축량이 커야 하고, 숫자여야 한다
+{
+  const parts = QUESTIONS.flatMap((q) => q.parts ?? [q]);
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const pick = (p) => {
+    if (p.steps) return p.steps[Math.floor(rnd() * p.steps.length)];
+    if (p.type === "slider") return p.min + Math.floor(rnd() * (p.max - p.min + 1));
+    const o = p.options.map((x) => x.value);
+    const one = () => o[Math.floor(rnd() * o.length)];
+    return p.multiple ? [...new Set([one(), one()])] : one();
+  };
+  const easyAll = Object.fromEntries(FLEX_ITEMS.map((f) => [f.id, FLEX_EASY]));
+  const problems = new Set();
+  const used = new Set();
+  for (let t = 0; t < 400; t++) {
+    const a = Object.fromEntries(parts.map((p) => [p.id, pick(p)]));
+    const normal = suggest(a, { limit: 99 });
+    for (const e of suggest(a, { limit: 99, flexibility: easyAll })) {
+      const n = normal.find((x) => x.id === e.id);
+      if (!Number.isFinite(e.saving)) problems.add(`${e.id} 숫자 아님`);
+      if (e.isEasy) used.add(e.id);
+      if (e.isEasy && n && !(e.saving > n.saving)) problems.add(`${e.id} 기본보다 크지 않음`);
+    }
+  }
+  // 가중치: 한 문항을 보통 → 가능 → 쉬움으로 올리면 그 문항 제안의 순위가 뒤로 밀리지 않아야 한다
+  const rankOf = (list, qid) => list.findIndex((x) => x.question === qid);
+  for (let t = 0; t < 200; t++) {
+    const a = Object.fromEntries(parts.map((p) => [p.id, pick(p)]));
+    for (const f of FLEX_ITEMS) {
+      const ranks = [3, 4, FLEX_EASY].map((lv) => rankOf(suggest(a, { limit: 99, flexibility: { [f.id]: lv } }), f.id));
+      if (ranks[0] < 0) continue;
+      if (!(ranks[1] <= ranks[0] && ranks[2] <= ranks[1])) problems.add(`${f.id} 순위가 밀림 ${ranks.join("→")}`);
+    }
+  }
+  console.log("\n습관 변경 난이도 제안 (쉬움은 기본 제안보다 크고, 가능·쉬움일수록 앞으로)");
+  if (problems.size) {
+    failed += problems.size;
+    console.log(`  ✗ ${[...problems].join(", ")}`);
+  } else console.log(`  ✓ ${used.size}가지 제안 모두 기본보다 큼 · 가능·쉬움으로 올려도 순위가 밀리지 않음`);
 }
 
 console.log(failed ? `\n✗ ${failed}개 불일치` : "\n✓ 모든 사례가 손계산과 일치");

@@ -10,10 +10,12 @@ import { QUESTIONS, answerKeys } from "../lib/carbon/questions.js";
 import { ITEM_NOTES, suggest } from "../lib/carbon/suggestions.js";
 import { newDraft, useDraft } from "../lib/draft.js";
 import { REGIONS, pointPrograms } from "../lib/points.js";
-import { useResponses } from "../lib/responses.js";
+import { useResponses } from "../lib/records.jsx";
+import { useAuth } from "../lib/auth.jsx";
+import { FLEX_EASY, FLEX_HARD } from "../lib/flexibility.js";
 import { shouldSync, syncRecord } from "../lib/remote.js";
 import { CAT_COLORS } from "../lib/colors.js";
-import { formatDate, formatDuration, num, roundKg, toTon } from "../lib/format.js";
+import { formatDate, formatDuration, num, roundKg, toTon, tonDiff } from "../lib/format.js";
 import "../components/charts/charts.css";
 import "./Result.css";
 
@@ -273,6 +275,7 @@ export default function ResultPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { responses, update } = useResponses();
+  const { enabled: accounts, user, flexibility } = useAuth();
   const [, setDraft] = useDraft();
   const [allCompare, setAllCompare] = useState(false); // 휴대폰: 비교 문장을 모두 보여 줄지
   const [openTip, setOpenTip] = useState(null); // 휴대폰: 설명을 펼친 제안
@@ -314,11 +317,16 @@ export default function ResultPage() {
   const result = calculate(record.answers, detail);
   const prevTotal = previous ? calculate(previous.answers, previous.detail).total.value : null;
   const { total, byCategory, items } = result;
+  // 차이는 화면에 보이는 톤 값끼리 계산한다 (표기 3.8 → 3.9면 0.1톤)
+  const prevDiff = previous ? tonDiff(total.value, prevTotal) : 0;
   const biggest = biggestItem(result);
-  const suggestions = suggest(record.answers, { detail, focusItem: biggest.key });
+  // 로그인했으면 '내 계정'에서 고른 습관 변경 난이도를 반영한다
+  const suggestions = suggest(record.answers, { detail, focusItem: biggest.key, flexibility });
+  const flexUsed = Boolean(user) && Object.values(flexibility).some((v) => v <= FLEX_HARD || v === FLEX_EASY);
   // 자세히 입력이 있으면 간편 입력만으로 계산한 값과 비교한다 (README 가설 2)
   const directCount = items.filter((i) => i.basis === "direct").length;
   const simpleTotal = directCount ? calculate(record.answers).total.value : null;
+  const simpleDiff = simpleTotal !== null ? tonDiff(total.value, simpleTotal) : 0;
   const savingSum = suggestions.reduce((s, x) => s + x.saving, 0);
   const vsRef = ((total.value - REFERENCE) / REFERENCE) * 100;
 
@@ -380,9 +388,9 @@ export default function ResultPage() {
                 <li className="is-extra">
                   간편 입력만으로 계산하면 {toTon(simpleTotal)}톤 → 자세히 입력을 반영해{" "}
                   <strong>
-                    {Math.abs(total.value - simpleTotal) < 50
+                    {simpleDiff === 0
                       ? "거의 같아요"
-                      : `${toTon(Math.abs(total.value - simpleTotal))}톤 ${total.value < simpleTotal ? "줄었어요" : "늘었어요"}`}
+                      : `${toTon(Math.abs(simpleDiff))}톤 ${simpleDiff < 0 ? "줄었어요" : "늘었어요"}`}
                   </strong>
                 </li>
               )}
@@ -399,10 +407,10 @@ export default function ResultPage() {
               {previous && (
                 <li>
                   지난 계산({formatDate(previous.completedAt)}) {toTon(prevTotal)}톤 대비{" "}
-                  <strong className={total.value <= prevTotal ? "delta-good" : "delta-bad"}>
-                    {Math.abs(total.value - prevTotal) < 50
+                  <strong className={prevDiff <= 0 ? "delta-good" : "delta-bad"}>
+                    {prevDiff === 0
                       ? "거의 같아요"
-                      : `${toTon(Math.abs(total.value - prevTotal))}톤 ${total.value < prevTotal ? "줄었어요" : "늘었어요"}`}
+                      : `${toTon(Math.abs(prevDiff))}톤 ${prevDiff < 0 ? "줄었어요" : "늘었어요"}`}
                   </strong>
                 </li>
               )}
@@ -489,7 +497,15 @@ export default function ResultPage() {
             </p>
           </div>
 
-          <h3 className="advice-title">이렇게 줄여 보세요</h3>
+          {/* 로그인했으면 제목 줄 오른쪽에서 '내 계정'의 습관 변경 난이도로 바로 간다 */}
+          <div className="advice-head">
+            <h3 className="advice-title">이렇게 줄여 보세요</h3>
+            {user && (
+              <Link className="advice-flex" to="/account" state={{ focus: "flex" }}>
+                습관 변경 난이도 {flexUsed ? "보기" : "설정"} →
+              </Link>
+            )}
+          </div>
           {suggestions.length > 0 ? (
             <>
               <ol className="suggestions">
@@ -502,6 +518,7 @@ export default function ResultPage() {
                       <span className="sg-target">
                         {s.isFocus && <b>가장 큰 항목</b>}
                         {itemLabel(s.item)} 줄이기
+                        {s.isEasy && <em className="sg-easy">쉬움 · 조금 더 크게</em>}
                       </span>
                       <strong>{s.title}</strong>
                       <p className="sg-desc">{s.desc}</p>
@@ -545,9 +562,15 @@ export default function ResultPage() {
           <Link className="btn btn-ghost" to="/calculator">
             처음부터 다시 계산
           </Link>
-          <Link className="btn btn-primary" to="/method">
-            어떻게 계산했나요? →
+          {/* 계정 기능이 있으면 주 버튼은 계정: 로그인했으면 내 이전 기록, 아니면 로그인 권유. 계산 방법은 보조 버튼 */}
+          <Link className={accounts ? "btn btn-ghost result-method" : "btn btn-primary"} to="/method">
+            어떻게 계산했나요?{accounts ? "" : " →"}
           </Link>
+          {accounts && (
+            <Link className="btn btn-primary" to="/account">
+              {user ? "내 이전 기록 보기 →" : "로그인하고 기록 저장하기 →"}
+            </Link>
+          )}
         </div>
 
         <p className="disclaimer">

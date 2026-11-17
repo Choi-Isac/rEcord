@@ -13,6 +13,7 @@
 .menu-link { display: block; padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 15px; white-space: nowrap; }
 .menu-link:hover { background: var(--accent-soft); color: var(--accent); }
 .menu-link.active { color: var(--accent); }
+.menu + .menu-account { margin-left: -20px; } /* 메뉴와 같은 간격(4px)으로 붙인다 (.nav gap 24px) */
 
 /* 메인 디자인 전환 */
 .design-switch { display: flex; align-items: center; margin-left: auto; }
@@ -36,6 +37,7 @@
 
 @media (max-width: 640px) {
   .nav { gap: 8px; height: 56px; }
+  .menu + .menu-account { margin-left: -4px; }
   .design-select { max-width: 104px; font-size: 12px; }
   .logo-img { height: 30px; }
   .menu-link { padding: 6px 8px; font-size: 14px; }
@@ -45,8 +47,10 @@
   .nav { flex-wrap: wrap; height: auto; padding-top: 8px; padding-bottom: 8px; row-gap: 6px; }
   .logo-img { height: 26px; }
   .menu { margin-left: auto; }
-  .design-switch { order: 3; width: 100%; margin-left: 0; }
-  .design-select { max-width: none; }
+  /* 디자인 선택이 첫 줄에 들어가지 못하도록 폭을 넉넉히 잡아 둘째 줄로 보낸다 */
+  .design-switch { order: 3; flex: 1 1 60%; margin-left: 0; }
+  .design-select { max-width: none; width: 100%; }
+  .menu + .menu-account { order: 4; margin-left: 0; }
   .menu-link { padding: 6px 6px; }
 }
 @media (max-width: 360px) {

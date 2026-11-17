@@ -1,0 +1,73 @@
+.history { padding-top: 28px; padding-bottom: 64px; display: grid; gap: 16px; }
+
+/* 요약 수치 */
+.hs-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.hs-stat { padding: 16px 18px; display: grid; gap: 4px; align-content: start; }
+.hs-stat > span { font-size: 13px; font-weight: 600; color: var(--ink-3); }
+.hs-stat strong { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+.hs-stat strong .hs-delta { font-size: inherit; }
+.hs-stat small { font-size: 13px; color: var(--ink-2); }
+.hs-delta { font-weight: 700; white-space: nowrap; }
+.hs-delta:not(.delta-good):not(.delta-bad) { color: var(--ink-3); } /* 변화 없음 */
+
+/* 두 계산 비교 */
+.hs-compare { padding: 22px 24px; display: grid; gap: 14px; }
+.hs-compare-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.hs-compare-head h2 { margin: 0; font-size: 18px; }
+.hs-pick { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 8px; }
+.hs-pick label { display: grid; gap: 4px; font-size: 12px; font-weight: 700; color: var(--ink-3); }
+.hs-pick .select { min-width: 0; max-width: 260px; font-size: 14px; }
+.hs-arrow { padding-bottom: 9px; color: var(--ink-3); }
+.hs-pair { margin: 0; font-size: 16px; color: var(--ink-2); }
+.hs-pair b { font-size: 20px; color: var(--ink); }
+.hs-pair .hs-delta { margin-left: 6px; }
+.hs-note { margin: 0; font-size: 14px; color: var(--ink-3); }
+
+.hs-compare-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px 32px; }
+.hs-compare-grid h3 { margin: 0 0 8px; font-size: 15px; }
+
+/* 항목별 증감: 가운데 기준선에서 줄면 왼쪽(좋음), 늘면 오른쪽 */
+.hs-items, .hs-answers { list-style: none; margin: 0; padding: 0; }
+.hs-items li { display: grid; grid-template-columns: 112px minmax(60px, 1fr) 120px; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); }
+.hs-item-name { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--ink-2); min-width: 0; }
+.hs-item-name i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.hs-bar { position: relative; height: 14px; }
+.hs-bar::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--viz-axis); }
+.hs-bar span { position: absolute; top: 0; bottom: 0; }
+.hs-bar .is-down { right: 50%; background: var(--good); border-radius: 4px 0 0 4px; }
+.hs-bar .is-up { left: 50%; background: var(--bad); border-radius: 0 4px 4px 0; }
+.hs-item-val { display: grid; text-align: right; font-size: 13px; }
+.hs-item-val small { font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.hs-answers > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; row-gap: 4px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.hs-group-name { grid-column: 1; font-size: 14px; font-weight: 800; color: var(--ink); }
+.hs-group-changes { grid-column: 1; list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.hs-group-changes li { display: grid; gap: 1px; }
+/* 묶음: 안쪽 답을 들여 쓰고 왼쪽에 옅은 선 */
+.is-group .hs-group-changes { padding-left: 10px; border-left: 2px solid var(--line); }
+.hs-answer-items { grid-column: 1; font-size: 12px; color: var(--ink-3); }
+.hs-answer-effect { grid-column: 2; grid-row: 1 / -1; align-self: center; font-size: 13px; text-align: right; }
+.hs-foot { margin: 8px 0 0; font-size: 12px; color: var(--ink-3); }
+.hs-answer-name { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.hs-answer-name em { margin-left: 6px; font-style: normal; font-size: 11px; font-weight: 700; color: var(--green); }
+.hs-answer-val { color: var(--ink-3); }
+.hs-answer-val b { color: var(--ink); }
+
+.hs-links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; font-weight: 700; }
+.hs-links a { color: var(--accent); }
+.hs-links a:hover { text-decoration: underline; }
+
+@media (max-width: 860px) {
+  .hs-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hs-compare-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .history { padding-top: 18px; gap: 12px; }
+  .hs-stat { padding: 12px 14px; }
+  .hs-stat strong { font-size: 22px; }
+  .hs-compare { padding: 18px 16px; }
+  .hs-pick { width: 100%; }
+  .hs-pick label { flex: 1; }
+  .hs-pick .select { max-width: none; width: 100%; }
+  .hs-items li { grid-template-columns: 88px minmax(40px, 1fr) 96px; gap: 8px; }
+}

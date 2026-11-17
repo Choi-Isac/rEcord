@@ -20,7 +20,9 @@
 .preview-value { display: flex; align-items: baseline; gap: 6px; font-size: 40px; font-weight: 800; letter-spacing: -.02em; margin-top: 6px; }
 .preview-value small { font-size: 15px; font-weight: 600; color: var(--ink-2); letter-spacing: 0; }
 .preview-value .badge-est { align-self: center; }
-.preview-range { font-size: 13px; color: var(--ink-3); }
+.preview-range { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 13px; color: var(--ink-3); }
+.preview-date { font-weight: 500; color: var(--ink-3); }
+.preview .hist-links { margin-top: 10px; }
 
 .areas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .area { padding: 20px; }

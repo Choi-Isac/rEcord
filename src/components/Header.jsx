@@ -1,6 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 import { NAV } from "../lib/nav.js";
 import { HOME_DESIGNS, useHomeDesign } from "../lib/design.jsx";
+import { useAuth } from "../lib/auth.jsx";
 import logo from "../img/rEcord_crimson-dot.svg";
 import "./Header.css";
 
@@ -28,6 +29,7 @@ function DesignSwitch() {
 }
 
 export default function Header() {
+  const { enabled, user } = useAuth();
   return (
     <header className="site-header">
       <div className="wrap nav">
@@ -44,6 +46,12 @@ export default function Header() {
             </NavLink>
           ))}
         </nav>
+        {/* 계정 링크는 메뉴 밖에 둔다: 아주 좁은 화면에서는 둘째 줄(디자인 선택 옆)로 내려간다 */}
+        {enabled && (
+          <NavLink to="/account" className="menu-link menu-account">
+            {user ? "내 계정" : "로그인"}
+          </NavLink>
+        )}
       </div>
     </header>
   );

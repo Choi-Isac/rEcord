@@ -1,0 +1,101 @@
+.account { padding-top: 28px; padding-bottom: 64px; }
+.account-card { padding: 24px 26px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-content: start; }
+.account > .account-card { max-width: 440px; margin: 0 auto; }
+.account-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; align-items: start; }
+
+/* 로그인 · 가입하기 전환 */
+.account-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 3px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+.account-tabs button {
+  border: 0; background: none; padding: 8px 0; border-radius: 7px; font: inherit; font-size: 14px; font-weight: 700;
+  color: var(--ink-2); cursor: pointer;
+}
+.account-tabs button[aria-selected="true"] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgba(0, 0, 0, .08); }
+
+.account-field { display: grid; gap: 6px; font-size: 14px; font-weight: 600; }
+.account-field .input { width: 100%; }
+.account-field small { font-size: 12px; font-weight: 400; color: var(--ink-3); }
+
+.account-policy { display: grid; gap: 10px; padding: 14px 16px; border-radius: 12px; background: var(--bg); }
+.account-policy ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; color: var(--ink-2); }
+
+.account-note { margin: 0; font-size: 13px; color: var(--ink-3); }
+.account-mock { max-width: 640px; margin: 0 auto 16px; padding: 10px 14px; border-radius: 10px; font-size: 13px; text-align: center; color: #7a5300; background: #fff3d1; }
+.account-error { margin: 0; font-size: 14px; font-weight: 600; color: #b42318; }
+
+.account-who { display: grid; gap: 2px; }
+.account-who p { margin: 0; }
+.account-who strong { font-size: 20px; overflow-wrap: anywhere; }
+.account-id { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-size: 13px; color: var(--ink-3); }
+.account-field em { font-style: normal; font-weight: 400; color: var(--ink-3); }
+.account-nick { display: grid; gap: 10px; }
+.account-nick-actions { display: flex; gap: 8px; }
+.account-status { margin: 0; font-size: 13px; color: var(--ink-2); }
+.account-status.is-saved::before { content: "✓ "; color: var(--accent); font-weight: 700; }
+.account-status.is-error { color: #b42318; }
+.account-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.account-delete { color: var(--ink-3); font-size: 13px; }
+.account-delete:hover { color: #b42318; }
+
+.account-title { margin: 0; font-size: 18px; }
+.account-records-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.account-more { font-size: 13px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+.account-more:hover { text-decoration: underline; }
+.account-records { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.account-records a {
+  display: grid; grid-template-columns: 1fr auto 96px; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 10px; background: var(--bg); border: 1px solid transparent;
+}
+.account-records a:hover { border-color: var(--accent); }
+.ar-date { display: grid; font-weight: 600; font-size: 15px; }
+.ar-date small { font-size: 12px; font-weight: 400; color: var(--ink-3); }
+.ar-total { font-size: 14px; color: var(--ink-2); }
+.ar-total b { font-size: 20px; color: var(--ink); margin-right: 2px; }
+.ar-diff { font-size: 13px; text-align: right; color: var(--ink-3); }
+.ar-diff.is-down { color: var(--accent); font-weight: 700; }
+.ar-diff.is-up { color: #b42318; font-weight: 700; }
+
+/* 습관 변경 난이도 */
+.account-flex { grid-column: 1 / -1; gap: 18px; }
+.flex-head { display: grid; gap: 6px; }
+.flex-title { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.flex-toggle {
+  flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 12px;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer;
+}
+.flex-toggle:hover { border-color: var(--ink-3); color: var(--ink); }
+.account-flex:not(.is-open) { gap: 6px; }
+.account-flex [hidden] { display: none; } /* display: grid가 hidden을 덮지 않게 */
+.flex-head b { color: var(--ink); }
+.flex-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 28px; }
+.flex-group { display: grid; gap: 6px; align-content: start; }
+.flex-group h3 { margin: 0 0 2px; font-size: 14px; color: var(--ink-2); }
+.flex-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); }
+.flex-label { font-size: 14px; font-weight: 600; }
+.flex-scale { display: grid; grid-template-columns: repeat(5, 52px); gap: 2px; padding: 2px; border-radius: 9px; background: var(--bg); border: 1px solid var(--line); }
+.flex-opt {
+  border: 0; background: none; padding: 6px 0; border-radius: 7px; font: inherit; font-size: 12px; font-weight: 600;
+  color: var(--ink-3); cursor: pointer;
+}
+.flex-opt:hover { color: var(--ink); background: var(--surface); }
+/* 고른 단계: 불가·어려움은 붉은 계열, 보통은 회색, 가능·쉬움은 초록 계열 */
+.flex-opt[aria-checked="true"] { color: #fff; }
+.flex-opt.flex-1[aria-checked="true"] { background: #b42318; }
+.flex-opt.flex-2[aria-checked="true"] { background: #d9822b; }
+.flex-opt.flex-3[aria-checked="true"] { background: var(--ink-3); }
+.flex-opt.flex-4[aria-checked="true"] { background: #4d9a74; }
+.flex-opt.flex-5[aria-checked="true"] { background: var(--accent); }
+
+@media (max-width: 760px) {
+  .account-grid { grid-template-columns: 1fr; }
+  .flex-groups { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .account { padding-top: 18px; }
+  .account-card { padding: 20px 18px; }
+  .account-records a { grid-template-columns: 1fr auto; row-gap: 2px; }
+  .ar-diff { grid-column: 2; }
+  /* 휴대폰: 항목 이름 아래에 다섯 단계를 꽉 채워 */
+  .flex-row { grid-template-columns: 1fr; gap: 6px; padding: 8px 0; }
+  .flex-scale { grid-template-columns: repeat(5, 1fr); }
+  .flex-opt { padding: 8px 0; font-size: 13px; }
+}

@@ -6,7 +6,7 @@ import { HOUSING } from "../lib/carbon/factors.js";
 import { QUESTIONS, emptyAnswers } from "../lib/carbon/questions.js";
 import { PREFILL_KEY, draftProgress, newDraft, progressText, resumePoint, useDraft } from "../lib/draft.js";
 import { useStoredState } from "../lib/storage.js";
-import { useResponses } from "../lib/responses.js";
+import { useResponses } from "../lib/records.jsx";
 import { formatDate } from "../lib/format.js";
 import "./Calculator.css";
 
@@ -101,8 +101,9 @@ export default function StartPage() {
             <p>{CONSENT.research}</p>
           </details>
           <p className="consent-note">
-            응답은 이용 중인 브라우저에 저장됩니다. 통계·연구 활용에 동의하지 않은 응답은 외부로 전송되지 않습니다. 단, 결과
-            화면에서 제출한 피드백은 동의 여부와 관계없이 개인 식별 정보 없이 서버에 저장됩니다.
+            응답은 이용 중인 브라우저에 저장되며, 로그인한 경우 본인만 열람할 수 있도록 계정에도 저장됩니다. 그 밖에는
+            통계·연구 활용에 동의한 응답만 서버로 전송됩니다. 단, 결과 화면에서 제출한 피드백은 동의 여부와 관계없이 개인 식별
+            정보 없이 서버에 저장됩니다.
           </p>
 
           {prefill && (

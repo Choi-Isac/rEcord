@@ -4,7 +4,7 @@ import { FACTOR_VERSION } from "../lib/carbon/factors.js";
 import "./Footer.css";
 
 const DATA_POLICY =
-  "입력 정보는 이용 중인 브라우저에 저장되며, 통계·연구 활용에 동의한 응답에 한해 개인 식별 정보 없이 서버에 저장됩니다. 제출된 피드백은 동의 여부와 관계없이 서버에 저장됩니다.";
+  "입력 정보는 이용 중인 브라우저에 저장되며, 로그인한 경우 본인만 열람할 수 있도록 계정에도 저장됩니다. 통계·연구 활용에 동의한 응답에 한해 계정과 연결되지 않은 상태로 서버에 저장됩니다. 제출된 피드백은 동의 여부와 관계없이 서버에 저장됩니다.";
 
 export default function Footer() {
   return (

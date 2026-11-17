@@ -1,7 +1,8 @@
 // 응답을 Supabase에 보내기 (docs/데이터베이스-구조.md의 테이블 구조)
 // 입력값·거주 지역은 통계·연구 활용에 동의한 응답만 보내고, 피드백은 동의와 관계없이 보낸다.
 // 어디까지 보냈는지는 레코드의 remote에 기록해 두고, 실패한 부분은 다음에 결과 화면을 볼 때 다시 보낸다.
-import { supabase } from "./supabase.js";
+// 로그인한 상태여도 계정과 이어지지 않도록 익명 전용 클라이언트(researchDb)로 보낸다
+import { researchDb as supabase } from "./supabase.js";
 
 const DUPLICATE = "23505"; // 이미 보낸 행 (재시도 중 앞선 요청이 성공했던 경우)
 

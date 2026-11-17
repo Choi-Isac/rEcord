@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import StackedBar from "../components/charts/StackedBar.jsx";
 import { CATEGORIES, REFERENCE_ANSWERS, calculate } from "../lib/carbon/engine.js";
 import { QUESTIONS } from "../lib/carbon/questions.js";
-import { useResponses } from "../lib/responses.js";
+import { DiffText, HistoryLinks, countText, useHistory } from "../components/HistoryCard.jsx";
 import { CAT_COLORS } from "../lib/colors.js";
 import { formatDate, toTon } from "../lib/format.js";
 import "../components/charts/charts.css";
@@ -28,9 +28,8 @@ const TRUST = [
 ];
 
 export default function HomeClassic() {
-  const { responses } = useResponses();
-  const last = responses.at(-1);
-  const lastTotal = last ? calculate(last.answers, last.detail).total.value : null;
+  const history = useHistory();
+  const shown = history?.result ?? EXAMPLE; // 오른쪽 카드에 보여 줄 결과
 
   return (
     <>
@@ -54,36 +53,39 @@ export default function HomeClassic() {
               <Link className="btn btn-light" to="/calculator">
                 간편 입력으로 시작하기 →
               </Link>
-              {last ? (
-                <Link className="btn btn-outline-light" to={`/result/${last.id}`}>
-                  지난 결과 {toTon(lastTotal)}톤 · {formatDate(last.completedAt)}
-                </Link>
-              ) : (
-                <Link className="btn btn-outline-light" to="/method">
-                  계산 방법 보기
-                </Link>
-              )}
+              <Link className="btn btn-outline-light" to="/method">
+                계산 방법 보기
+              </Link>
             </div>
           </div>
 
-          <div className="card preview" aria-label="결과 예시">
+          {/* 과거 기록이 있으면 결과 예시 대신 내 최근 결과 */}
+          <div className="card preview" aria-label={history ? "내 최근 결과" : "결과 예시"}>
             <div className="preview-head">
-              <span>결과 예시</span>
-              <span className="badge-sample">가상의 대학생</span>
+              <span>{history ? "내 최근 결과" : "결과 예시"}</span>
+              {history ? (
+                <span className="preview-date">
+                  {formatDate(history.last.completedAt)} · {countText(history.count)}
+                </span>
+              ) : (
+                <span className="badge-sample">가상의 대학생</span>
+              )}
             </div>
             <div className="preview-value">
-              {toTon(EXAMPLE.total.value)}
+              {toTon(shown.total.value)}
               <small>톤 CO₂e/년</small>
               <span className="badge-est">추정</span>
             </div>
             <div className="preview-range">
-              {toTon(EXAMPLE.total.low)}~{toTon(EXAMPLE.total.high)}톤
+              {toTon(shown.total.low)}~{toTon(shown.total.high)}톤
+              {history && <DiffText diff={history.diff} />}
             </div>
             <StackedBar
-              items={CATEGORIES.map((c) => ({ name: c.label, value: Math.round(EXAMPLE.byCategory[c.key].value) }))}
+              items={CATEGORIES.map((c) => ({ name: c.label, value: Math.round(shown.byCategory[c.key].value) }))}
               colors={CATEGORIES.map((c) => CAT_COLORS[c.key])}
               unit="kg"
             />
+            {history && <HistoryLinks last={history.last} />}
           </div>
         </div>
       </section>

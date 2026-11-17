@@ -17,6 +17,10 @@
 .st-scale-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; background: #fff; }
 .st-scale-mark { position: absolute; top: -8px; bottom: -8px; width: 2px; background: #ffd66b; }
 .st-scale-mark span { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; font-weight: 700; color: #ffd66b; }
+/* 내 최근 결과: 눈금 아래쪽에 표시해 위쪽의 2030 목표와 겹치지 않게 */
+.st-scale-me { position: absolute; top: -6px; bottom: -6px; width: 4px; margin-left: -2px; border-radius: 2px; background: #7ee0b5; box-shadow: 0 0 0 2px rgba(0,0,0,.25); }
+.st-scale-me span { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; font-weight: 700; color: #7ee0b5; }
+.st-hist { margin-top: 22px; }
 .st-scale-axis { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; opacity: .65; }
 
 .st-hero-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 28px; font-size: 14px; }

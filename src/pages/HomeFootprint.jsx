@@ -5,7 +5,7 @@ import { CATEGORIES, calculate } from "../lib/carbon/engine.js";
 import { TARGET_2030_KG } from "../lib/carbon/factors.js";
 import { QUESTIONS } from "../lib/carbon/questions.js";
 import { PREFILL_KEY } from "../lib/draft.js";
-import { useResponses } from "../lib/responses.js";
+import HistoryCard, { useHistory } from "../components/HistoryCard.jsx";
 import { save } from "../lib/storage.js";
 import { CAT_COLORS } from "../lib/colors.js";
 import { formatDate, num, toTon } from "../lib/format.js";
@@ -104,17 +104,31 @@ function ResultDemo({ kind }) {
   );
 }
 
+// 칩이 눌린 상태: 통학 수단처럼 여러 개를 고른 답(배열)이면 그중 하나인지
+const isOn = (v, value) => (Array.isArray(v) ? v.includes(value) : v === value);
+
 export default function HomeFootprint() {
   const navigate = useNavigate();
-  const { responses } = useResponses();
-  const last = responses.at(-1);
   const [picks, setPicks] = useState({});
+  // 과거 기록이 있으면 가장 최근 계산의 답과 결과에서 시작한다 (없으면 기준 예시)
+  const latest = useHistory()?.last;
+  const baseAnswers = latest?.answers ?? {};
 
-  const result = calculate(picks);
+  // 바꾼 문항은 최근 계산의 자세히 입력 값 대신 고른 칩으로 계산한다
+  const detail = Object.fromEntries(Object.entries(latest?.detail ?? {}).filter(([id]) => !(id in picks)));
+  const result = calculate({ ...baseAnswers, ...picks }, detail);
   const picked = Object.keys(picks).length;
+  const current = (id) => picks[id] ?? baseAnswers[id];
+  // 최근 답이 미리보기 칩(통학 수단 다섯 가지)에 없으면 그 칩도 보여 준다
+  const optionsOf = (q) => {
+    const def = QUESTIONS.find((d) => d.id === q.id);
+    return def.options.filter((o) => q.options.includes(o) || isOn(baseAnswers[q.id], o.value));
+  };
 
   const continueWithPicks = () => {
-    save(PREFILL_KEY, picks);
+    // 최근 기록이 있으면 화면에 보이는 네 답(바꾸지 않은 것은 최근 답)을 넘긴다
+    const shown = latest ? Object.fromEntries(QUICK.map((q) => [q.id, current(q.id)]).filter(([, v]) => v != null)) : picks;
+    save(PREFILL_KEY, shown);
     navigate("/calculator");
   };
 
@@ -141,11 +155,7 @@ export default function HomeFootprint() {
               <li>📝 {QUESTIONS.length}개 항목</li>
               <li>🔒 회원가입 없음</li>
             </ul>
-            {last && (
-              <Link className="fp-last" to={`/result/${last.id}`}>
-                지난 결과 {toTon(calculate(last.answers, last.detail).total.value)}톤 ({formatDate(last.completedAt)}) 보기 →
-              </Link>
-            )}
+            <HistoryCard className="fp-hist" />
           </div>
 
           <div className="card fp-try">
@@ -154,12 +164,12 @@ export default function HomeFootprint() {
                 <fieldset key={q.id} className="fp-q">
                   <legend>{q.label}</legend>
                   <div className="fp-pills">
-                    {q.options.map((o) => (
+                    {optionsOf(q).map((o) => (
                       <button
                         key={o.value}
                         type="button"
                         className="fp-pill"
-                        aria-pressed={picks[q.id] === o.value}
+                        aria-pressed={isOn(current(q.id), o.value)}
                         onClick={() => setPicks((p) => ({ ...p, [q.id]: o.value }))}
                       >
                         {o.icon && <span aria-hidden="true">{o.icon} </span>}
@@ -175,7 +185,7 @@ export default function HomeFootprint() {
               <Foot result={result} />
               <div className="fp-total">
                 <div className="fp-total-label">
-                  내 발자국 <span className="badge-est">추정</span>
+                  {latest && !picked ? "가장 최근 결과" : "내 발자국"} <span className="badge-est">추정</span>
                 </div>
                 <div className="fp-total-value">
                   {toTon(result.total.value)}
@@ -194,7 +204,22 @@ export default function HomeFootprint() {
             </div>
 
             <p className="fp-try-note">
-              {picked < QUICK.length ? (
+              {latest ? (
+                picked ? (
+                  <>
+                    바꾼 {picked}개 말고는 가장 최근 계산({formatDate(latest.completedAt)})의 답이에요.
+                    {" "}
+                    <button type="button" className="link-btn fp-reset" onClick={() => setPicks({})}>
+                      최근 답으로 되돌리기
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    가장 최근 계산({formatDate(latest.completedAt)})의 답과 결과예요.
+                    <span className="only-desktop"> 답을 바꿔 보면 발자국이 어떻게 달라지는지 바로 보여요.</span>
+                  </>
+                )
+              ) : picked < QUICK.length ? (
                 <>
                   {QUICK.length}개 중 {picked}개 골랐어요.
                   <span className="only-desktop"> 고르지 않은 항목은 기준 예시(가상의 대학생) 값이에요.</span>
@@ -207,7 +232,7 @@ export default function HomeFootprint() {
               )}
             </p>
             <div className="fp-try-actions">
-              <button className="btn btn-primary" onClick={continueWithPicks} disabled={picked === 0}>
+              <button className="btn btn-primary" onClick={continueWithPicks} disabled={!latest && picked === 0}>
                 이 답으로 이어서 계산하기 →
               </button>
               <Link className="link-btn" to="/calculator">

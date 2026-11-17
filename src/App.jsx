@@ -5,6 +5,8 @@ import StartPage from "./pages/StartPage.jsx";
 import SimpleInputPage from "./pages/SimpleInputPage.jsx";
 import ResultPage from "./pages/ResultPage.jsx";
 import MethodPage from "./pages/MethodPage.jsx";
+import AccountPage from "./pages/AccountPage.jsx";
+import HistoryPage from "./pages/HistoryPage.jsx";
 import NotFound from "./pages/NotFound.jsx";
 
 export default function App() {
@@ -17,6 +19,8 @@ export default function App() {
         <Route path="result" element={<ResultPage />} />
         <Route path="result/:id" element={<ResultPage />} />
         <Route path="method" element={<MethodPage />} />
+        <Route path="account" element={<AccountPage />} />
+        <Route path="account/history" element={<HistoryPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

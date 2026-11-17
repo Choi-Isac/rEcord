@@ -1,9 +1,8 @@
 // 응답 데이터 모델 (docs/응답-데이터-스키마.md 참고)
 // 결과값이 아니라 원본 입력값을 저장하고, 계수 버전·입력 방식·학기를 함께 기록한다.
-// v0.1은 서버 없이 이 브라우저(localStorage)에만 저장한다.
+// 이 브라우저(localStorage)에 저장하고, 로그인하면 계정에도 저장한다(records.jsx).
 import { FACTOR_VERSION } from "./carbon/factors.js";
 import { QUESTIONS, answerKeys, mustPick, withDefaults } from "./carbon/questions.js";
-import { useStoredState } from "./storage.js";
 
 // 2: 자세히 입력(detail, detailOpened) 추가
 // 3: 통학 수단 여러 개(commuteMode 배열), 난방 방식(heatingType), 냉난방 하루 시간 칸, 냉방·난방 자세히 입력 분리
@@ -45,9 +44,4 @@ export function createResponse({ answers, touched, startedAt, consent, detail = 
   };
 }
 
-export function useResponses() {
-  const [responses, setResponses] = useStoredState(RESPONSES_KEY, []);
-  const update = (id, patch) => setResponses((list) => list.map((r) => (r.id === id ? { ...r, ...patch } : r)));
-  const add = (record) => setResponses((list) => [...list, record]);
-  return { responses, add, update };
-}
+// 기록 목록(useResponses)은 계정 동기화와 함께 records.jsx에서 관리한다

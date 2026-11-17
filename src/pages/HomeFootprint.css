@@ -13,8 +13,7 @@
 .fp-lead { margin: 0 0 20px; font-size: 16px; color: var(--ink-2); max-width: 460px; }
 .fp-meta { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0 0 18px; }
 .fp-meta li { background: var(--surface); border: 1px solid var(--line); border-radius: 99px; padding: 5px 12px; font-size: 13px; font-weight: 600; }
-.fp-last { font-size: 14px; font-weight: 700; color: var(--accent); }
-.fp-last:hover { text-decoration: underline; }
+.fp-hist { margin-top: 4px; }
 
 /* 미리보기 카드 */
 .fp-try { padding: 22px 24px; box-shadow: 0 18px 48px rgba(31, 60, 45, .1); }
