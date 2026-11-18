@@ -14,7 +14,7 @@ export default function Header() {
         </Link>
 
         <nav className="menu" aria-label="주 메뉴">
-          {NAV.map((item) => (
+          {NAV.filter((item) => !item.footerOnly).map((item) => (
             <NavLink key={item.to} to={item.to} className="menu-link">
               {item.label}
             </NavLink>

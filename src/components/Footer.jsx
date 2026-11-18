@@ -1,12 +1,18 @@
 import { Link } from "react-router-dom";
 import { NAV } from "../lib/nav.js";
 import { FACTOR_VERSION } from "../lib/carbon/factors.js";
+import { useAuth } from "../lib/auth.jsx";
 import "./Footer.css";
 
 const DATA_POLICY =
   "입력 정보는 이용 중인 브라우저에 저장되며, 로그인한 경우 본인만 열람할 수 있도록 계정에도 저장됩니다. 통계·연구 활용에 동의한 응답에 한해 계정과 연결되지 않은 상태로 서버에 저장됩니다. 제출된 피드백은 동의 여부와 관계없이 서버에 저장됩니다.";
 
 export default function Footer() {
+  const { enabled, user } = useAuth();
+  // 로그인을 쓸 수 있으면 '내 결과' 다음에 로그인/내 계정
+  const links = NAV.flatMap((item) =>
+    item.to === "/result" && enabled ? [item, { to: "/account", label: user ? "내 계정" : "로그인" }] : [item]
+  );
   return (
     <footer className="site-footer">
       <div className="wrap footer-grid">
@@ -26,7 +32,7 @@ export default function Footer() {
         </div>
         <div>
           <div className="footer-label">바로가기</div>
-          {NAV.map((item) => (
+          {links.map((item) => (
             <Link key={item.to} to={item.to}>
               {item.label}
             </Link>

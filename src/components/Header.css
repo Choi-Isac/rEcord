@@ -26,7 +26,7 @@
   .nav { gap: 4px; }
   .logo-img { height: 26px; }
   .menu { gap: 0; }
-  .menu + .menu-account { margin-left: 0; }
+  .menu + .menu-account { margin-left: -4px; } /* 메뉴 사이(0)와 같은 간격으로 */
   .menu-link { padding: 6px 6px; }
 }
 @media (max-width: 360px) {
