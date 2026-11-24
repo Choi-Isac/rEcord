@@ -1,5 +1,6 @@
 // 자세히 입력 패널: 문항 아래에 펼쳐지는 정확한 값 입력 (필드 정의는 src/lib/carbon/details.js)
 import { DETAILS, WEEKDAYS } from "../lib/carbon/details.js";
+import { OptionIcon } from "./Pictogram.jsx";
 
 // 숫자 칸: 비우면 null, 범위를 넘으면 최댓값으로
 function NumberInput({ id, value, min, max, step, unit, onChange, onBlur, label, placeholder }) {
@@ -47,7 +48,10 @@ function Shares({ f, value, onChange }) {
       {f.options.map((o) => (
         <label key={o.value} className="d-share">
           <span>
-            <span aria-hidden="true">{o.icon}</span> {o.label}
+            <span aria-hidden="true">
+              <OptionIcon icon={o.icon} />
+            </span>{" "}
+            {o.label}
           </span>
           <NumberInput
             value={value[o.value] ?? 0}
@@ -173,6 +177,11 @@ export default function DetailPanel({ q, values, onChange, onCommit }) {
               return (
                 <div key={f.key} className="d-row">
                   <label className="d-label" htmlFor={id}>
+                    {f.icon && (
+                      <>
+                        <OptionIcon icon={f.icon} />{" "}
+                      </>
+                    )}
                     {f.label}
                   </label>
                   <NumberInput

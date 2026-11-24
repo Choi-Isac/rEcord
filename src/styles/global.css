@@ -60,6 +60,9 @@ img, svg { display: block; }
 
 .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
 
+/* 선택지 픽토그램(components/Pictogram.jsx): 글자 크기에 맞춰 커지고 글자색을 따른다 */
+.pictogram { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -.2em; flex: none; }
+
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;

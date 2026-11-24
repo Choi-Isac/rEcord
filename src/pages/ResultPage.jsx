@@ -17,6 +17,7 @@ import { shouldSync, syncRecord } from "../lib/remote.js";
 import { CAT_COLORS } from "../lib/colors.js";
 import { formatDate, formatDuration, num, roundKg, toTon, tonDiff } from "../lib/format.js";
 import "../components/charts/charts.css";
+import { OptionIcon } from "../components/Pictogram.jsx";
 import "./Result.css";
 
 const REFERENCE = calculate(REFERENCE_ANSWERS).total.value;
@@ -512,7 +513,7 @@ export default function ResultPage() {
                 {suggestions.map((s) => (
                   <li key={s.id} className={`${s.isFocus ? "is-focus" : ""}${openTip === s.id ? " is-open" : ""}`}>
                     <span className="sg-icon" aria-hidden="true">
-                      {s.icon}
+                      <OptionIcon icon={s.icon} />
                     </span>
                     <div>
                       <span className="sg-target">

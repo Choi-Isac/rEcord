@@ -14,12 +14,12 @@ import { COMMUTE_MINUTE_STEPS, hasValue } from "./questions.js";
 export const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
 const MODE_OPTIONS = [
-  { value: "walk", label: "도보", icon: "🚶" },
-  { value: "bike", label: "자전거·킥보드", icon: "🚲" },
-  { value: "bus", label: "버스", icon: "🚌" },
-  { value: "subway", label: "지하철", icon: "🚇" },
-  { value: "car", label: "자가용", icon: "🚗" },
-  { value: "moto", label: "오토바이", icon: "🛵" },
+  { value: "walk", label: "도보", icon: "walk" },
+  { value: "bike", label: "자전거·킥보드", icon: "bike" },
+  { value: "bus", label: "버스", icon: "bus" },
+  { value: "subway", label: "지하철", icon: "subway" },
+  { value: "car", label: "자가용", icon: "car" },
+  { value: "moto", label: "오토바이", icon: "moto" },
 ];
 
 // 부동소수 오차(14.700000000000001) 없이 step 단위로 반올림
@@ -226,10 +226,10 @@ export const DETAILS = {
   meat: {
     intro: "1회 = 1인분(약 120g)이에요. 소고기는 같은 양의 닭고기보다 배출이 약 5배예요.",
     fields: [
-      { key: "beef", type: "number", label: "🐄 소고기", unit: "회/주", min: 0, max: 21, step: 0.5 },
-      { key: "pork", type: "number", label: "🐖 돼지고기", unit: "회/주", min: 0, max: 21, step: 0.5 },
-      { key: "chicken", type: "number", label: "🐔 닭고기", unit: "회/주", min: 0, max: 21, step: 0.5 },
-      { key: "fish", type: "number", label: "🐟 생선·해산물", unit: "회/주", min: 0, max: 21, step: 0.5 },
+      { key: "beef", type: "number", icon: "beef", label: "소고기", unit: "회/주", min: 0, max: 21, step: 0.5 },
+      { key: "pork", type: "number", icon: "pork", label: "돼지고기", unit: "회/주", min: 0, max: 21, step: 0.5 },
+      { key: "chicken", type: "number", icon: "chicken", label: "닭고기", unit: "회/주", min: 0, max: 21, step: 0.5 },
+      { key: "fish", type: "number", icon: "fish", label: "생선·해산물", unit: "회/주", min: 0, max: 21, step: 0.5 },
     ],
     defaults: (a) => ({
       ...splitRounded(FOOD.servingsPerWeek[a.meat], { beef: 0.2, pork: 0.45, chicken: 0.35 }, 0.5),
@@ -242,11 +242,11 @@ export const DETAILS = {
   mealsOut: {
     intro: "일주일 끼니를 장소별로 나눠 주세요. 합계가 21끼를 넘지 않게요.",
     fields: [
-      { key: "campus", type: "number", label: "🏫 학식", unit: "끼", min: 0, max: 21, step: 1 },
-      { key: "out", type: "number", label: "🍽️ 외식", unit: "끼", min: 0, max: 21, step: 1 },
-      { key: "delivery", type: "number", label: "🛵 배달", unit: "끼", min: 0, max: 21, step: 1 },
-      { key: "convenience", type: "number", label: "🏪 편의점", unit: "끼", min: 0, max: 21, step: 1 },
-      { key: "cook", type: "number", label: "🍳 직접 조리", unit: "끼", min: 0, max: 21, step: 1 },
+      { key: "campus", type: "number", icon: "campus", label: "학식", unit: "끼", min: 0, max: 21, step: 1 },
+      { key: "out", type: "number", icon: "eatOut", label: "외식", unit: "끼", min: 0, max: 21, step: 1 },
+      { key: "delivery", type: "number", icon: "delivery", label: "배달", unit: "끼", min: 0, max: 21, step: 1 },
+      { key: "convenience", type: "number", icon: "convenience", label: "편의점", unit: "끼", min: 0, max: 21, step: 1 },
+      { key: "cook", type: "number", icon: "cook", label: "직접 조리", unit: "끼", min: 0, max: 21, step: 1 },
       { type: "total", keys: ["campus", "out", "delivery", "convenience", "cook"], unit: "끼", max: 21 },
     ],
     defaults: (a) => ({
@@ -272,8 +272,8 @@ export const DETAILS = {
   parcels: {
     intro: "한 달에 받는 택배를 국내 배송과 해외직구로 나눠 적어 주세요. 해외직구는 국제 운송 때문에 1건당 배출이 더 커요.",
     fields: [
-      { key: "domestic", type: "number", label: "📦 국내 택배", unit: "건/월", min: 0, max: 300, step: 1 },
-      { key: "overseas", type: "number", label: "✈️ 해외직구", unit: "건/월", min: 0, max: 100, step: 1 },
+      { key: "domestic", type: "number", icon: "parcel", label: "국내 택배", unit: "건/월", min: 0, max: 300, step: 1 },
+      { key: "overseas", type: "number", icon: "overseas", label: "해외직구", unit: "건/월", min: 0, max: 100, step: 1 },
       { type: "total", keys: ["domestic", "overseas"], unit: "건" },
     ],
     defaults: (a) => ({ domestic: parcelCount(a.parcels), overseas: 0 }),

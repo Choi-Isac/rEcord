@@ -90,15 +90,15 @@
   transition: border-color .12s, background .12s;
 }
 .people-cell input { position: absolute; opacity: 0; pointer-events: none; }
-.people-cell span { filter: grayscale(1); opacity: .3; transition: opacity .12s, filter .12s; }
+.people-cell span { display: grid; color: var(--ink-3); opacity: .45; transition: opacity .12s, color .12s; }
 .people-cell:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .people-cell.is-on { border-color: var(--accent); background: var(--accent-soft); }
-.people-cell.is-on span { filter: none; opacity: 1; }
+.people-cell.is-on span { color: var(--accent); opacity: 1; }
 @media (hover: hover) {
   .people-cells:hover .people-cell { border-color: var(--ink-3); }
-  .people-cells:hover .people-cell span { filter: none; opacity: .75; }
+  .people-cells:hover .people-cell span { color: var(--accent); opacity: .7; }
   .people-cells .people-cell:hover ~ .people-cell { border-color: var(--line); background: var(--surface); }
-  .people-cells .people-cell:hover ~ .people-cell span { filter: grayscale(1); opacity: .3; }
+  .people-cells .people-cell:hover ~ .people-cell span { color: var(--ink-3); opacity: .45; }
 }
 .people-value { font-size: 18px; font-weight: 800; color: var(--accent); }
 .people-value.is-empty { font-size: 14px; font-weight: 600; color: var(--ink-3); }
@@ -116,6 +116,7 @@
   opacity: 0; transition: left .35s ease, opacity .2s;
 }
 .stops-marker.is-on { opacity: 1; }
+.stops-marker .pictogram { display: block; color: var(--accent); }
 .stops-stop { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 4px; text-align: center; cursor: pointer; }
 .stops-stop input { position: absolute; opacity: 0; pointer-events: none; }
 .stops-dot {

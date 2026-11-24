@@ -4,6 +4,7 @@ import { CLIMATE_HOURS } from "./factors.js";
 // 칩(chips)은 반드시 골라야 하고, 슬라이더와 기본값(default)이 있는 칩은 기본값에서 시작해 원하면 조정한다.
 // display: 칩을 보여 주는 방식 — "stops"(점을 잇는 막대, 슬라이더처럼), "people"(사람 칸), "cells"(설명이 붙은 칸)
 // multiple: 여러 개 고를 수 있는 칩(값은 배열) / type "group": 한 문항 안의 여러 답(parts)
+// 선택지 icon: 픽토그램 이름(components/Pictogram.jsx, 통학 수단·사는 곳) 또는 이모지
 
 // 통학 편도 시간: 5~30분은 1분 간격, 30~120분은 5분 간격
 export const COMMUTE_MINUTE_STEPS = [
@@ -45,13 +46,13 @@ export const QUESTIONS = [
     hintShort: "갈아타면 모두 골라 주세요.",
     multiple: true,
     options: [
-      { value: "walk", label: "도보", icon: "🚶" },
-      { value: "bike", label: "자전거·킥보드", icon: "🚲" },
-      { value: "bus", label: "버스", icon: "🚌" },
-      { value: "subway", label: "지하철", icon: "🚇" },
-      { value: "car", label: "자가용", icon: "🚗" },
-      { value: "taxi", label: "택시", icon: "🚕" },
-      { value: "moto", label: "오토바이", icon: "🛵" },
+      { value: "walk", label: "도보", icon: "walk" },
+      { value: "bike", label: "자전거·킥보드", icon: "bike" },
+      { value: "bus", label: "버스", icon: "bus" },
+      { value: "subway", label: "지하철", icon: "subway" },
+      { value: "car", label: "자가용", icon: "car" },
+      { value: "taxi", label: "택시", icon: "taxi" },
+      { value: "moto", label: "오토바이", icon: "moto" },
     ],
     skipWhen: noCommute,
   },
@@ -90,7 +91,7 @@ export const QUESTIONS = [
     label: "최근 1년 동안 비행기를 어떻게 탔나요?",
     // 거리 막대: 가까운 곳에서 먼 곳 순서. 고른 곳 위로 비행기가 옮겨 간다
     display: "stops",
-    marker: "✈️",
+    marker: "plane",
     options: [
       { value: "none", label: "타지 않았어요" },
       { value: "domestic", label: "국내 위주", sub: "제주 등" },
@@ -106,11 +107,11 @@ export const QUESTIONS = [
     type: "chips",
     label: "어디에 살고 있나요?",
     options: [
-      { value: "family", label: "본가", icon: "🏡" },
-      { value: "alone", label: "자취", sub: "원룸·오피스텔·빌라", icon: "🏢" },
-      { value: "dorm", label: "기숙사", icon: "🏫" },
-      { value: "boarding", label: "하숙·고시원", icon: "🛏️" },
-      { value: "share", label: "쉐어하우스", icon: "🧑‍🤝‍🧑" },
+      { value: "family", label: "본가", icon: "family" },
+      { value: "alone", label: "자취", sub: "원룸·오피스텔·빌라", icon: "alone" },
+      { value: "dorm", label: "기숙사", icon: "dorm" },
+      { value: "boarding", label: "하숙·고시원", icon: "boarding" },
+      { value: "share", label: "쉐어하우스", icon: "share" },
     ],
   },
   {
@@ -125,10 +126,10 @@ export const QUESTIONS = [
     // 칩 대신 사람 칸 넷: 누른 칸과 그 왼쪽 칸이 모두 켜진다 (■■■□ = 3명)
     display: "people",
     options: [
-      { value: 1, label: "1명", icon: "👤" },
-      { value: 2, label: "2명", icon: "👤" },
-      { value: 3, label: "3명", icon: "👤" },
-      { value: 4, label: "4명 이상", icon: "👤" },
+      { value: 1, label: "1명", icon: "person" },
+      { value: 2, label: "2명", icon: "person" },
+      { value: 3, label: "3명", icon: "person" },
+      { value: 4, label: "4명 이상", icon: "person" },
     ],
   },
   {

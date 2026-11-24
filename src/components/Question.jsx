@@ -1,5 +1,6 @@
 // 간편 입력 문항: 칩(하나 또는 여러 개 선택), 칸, 점 막대, 슬라이더, 여러 답을 묶은 문항(난방) + 문항별 자세히 입력 펼침
 import DetailPanel from "./DetailPanel.jsx";
+import { OptionIcon } from "./Pictogram.jsx";
 import { DETAILS, canExpand, detailValues, hasDetail } from "../lib/carbon/details.js";
 import { answerKeys, mustPick } from "../lib/carbon/questions.js";
 
@@ -19,7 +20,7 @@ function ChipField({ q, value, isDefault, onChange, labelId }) {
           />
           {o.icon && (
             <span className="chip-icon" aria-hidden="true">
-              {o.icon}
+              <OptionIcon icon={o.icon} />
             </span>
           )}
           <span className="chip-text">
@@ -78,7 +79,9 @@ function PeopleField({ q, value, onChange }) {
         {q.options.map((o) => (
           <label key={o.value} className={`people-cell${value != null && o.value <= value ? " is-on" : ""}`} title={o.label}>
             <input type="radio" name={q.id} checked={value === o.value} aria-label={o.label} onChange={() => onChange(q.id, o.value)} />
-            <span aria-hidden="true">{o.icon}</span>
+            <span aria-hidden="true">
+              <OptionIcon icon={o.icon} />
+            </span>
           </label>
         ))}
       </div>
@@ -99,7 +102,7 @@ function StopsField({ q, value, isDefault, onChange }) {
         <span className="stops-fill" style={{ width: pos }} />
         {q.marker && (
           <span className={idx > 0 ? "stops-marker is-on" : "stops-marker"} style={{ left: pos }}>
-            {q.marker}
+            <OptionIcon icon={q.marker} />
           </span>
         )}
       </div>

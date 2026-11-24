@@ -52,7 +52,7 @@
 .advice-flex:hover { text-decoration: underline; }
 .suggestions { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .suggestions li { display: grid; grid-template-rows: auto 1fr auto; gap: 8px; padding: 16px; border-radius: 12px; background: var(--bg); }
-.sg-icon { font-size: 28px; line-height: 1; }
+.sg-icon { font-size: 28px; line-height: 1; color: var(--accent); }
 .suggestions strong { font-size: 15px; display: block; margin-bottom: 4px; }
 .suggestions p { margin: 0; font-size: 13px; color: var(--ink-2); }
 .sg-saving { font-size: 13px; color: var(--ink-2); }

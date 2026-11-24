@@ -6,6 +6,7 @@ import { TARGET_2030_KG } from "../lib/carbon/factors.js";
 import { QUESTIONS } from "../lib/carbon/questions.js";
 import { PREFILL_KEY } from "../lib/draft.js";
 import HistoryCard, { useHistory } from "../components/HistoryCard.jsx";
+import { OptionIcon } from "../components/Pictogram.jsx";
 import { save } from "../lib/storage.js";
 import { CAT_COLORS } from "../lib/colors.js";
 import { formatDate, num, toTon } from "../lib/format.js";
@@ -97,8 +98,10 @@ function ResultDemo({ kind }) {
     );
   return (
     <div className="fp-demo fp-demo-tips" aria-hidden="true">
-      {["🚇", "🥗", "🥤"].map((e) => (
-        <span key={e}>{e}</span>
+      {["subway", "salad", "tumbler"].map((e) => (
+        <span key={e}>
+          <OptionIcon icon={e} />
+        </span>
       ))}
     </div>
   );
@@ -172,7 +175,11 @@ export default function HomeFootprint() {
                         aria-pressed={isOn(current(q.id), o.value)}
                         onClick={() => setPicks((p) => ({ ...p, [q.id]: o.value }))}
                       >
-                        {o.icon && <span aria-hidden="true">{o.icon} </span>}
+                        {o.icon && (
+                          <span aria-hidden="true">
+                            <OptionIcon icon={o.icon} />{" "}
+                          </span>
+                        )}
                         {o.label}
                       </button>
                     ))}
