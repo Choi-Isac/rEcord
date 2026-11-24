@@ -40,7 +40,7 @@ const SHORT = Object.fromEntries(FLEX_ITEMS.map((f) => [f.id, f.label]));
 // label이 없는 묶음은 문항 하나짜리(문항 이름을 쓴다).
 // scripts/check-cases.mjs가 엔진에서 답이 자기 묶음 밖의 항목을 바꾸지 않는지 검사한다
 export const ANSWER_GROUPS = [
-  { id: "commute", label: "통학", questions: ["commuteDays", "commuteMinutes", "commuteMode"], items: ["commute"] },
+  { id: "commute", label: "통학", questions: ["commuteDays", "commuteMode", "commuteMinutes"], items: ["commute"] },
   { id: "homeTrips", questions: ["homeTrips"], items: ["homeTrips"] },
   { id: "flights", questions: ["flights"], items: ["flights"] },
   {

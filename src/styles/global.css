@@ -163,5 +163,7 @@ img, svg { display: block; }
   .only-mobile-block { display: block !important; }
   .page-head { padding: 28px 0 26px; }
   .page-head h1 { font-size: 26px; }
+  /* compact: 입력 화면은 단계 표시가 제목 역할을 하므로 휴대폰에서 머리말을 숨긴다 */
+  .page-head.is-compact { display: none; }
   .sec-head h2 { font-size: 21px; }
 }

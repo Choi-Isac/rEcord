@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 
-// 하위 페이지 상단의 크림슨 머리말 띠. mobileDescription: 휴대폰에서 대신 보여 줄 짧은 설명
-export default function PageHead({ group, title, description, mobileDescription, crumbs = [] }) {
+// 하위 페이지 상단의 머리말 띠. mobileDescription: 휴대폰에서 대신 보여 줄 짧은 설명
+// compact: 휴대폰에서는 숨긴다 (입력 화면처럼 문항을 한 화면에 보여 줘야 하는 곳)
+export default function PageHead({ group, title, description, mobileDescription, crumbs = [], compact = false }) {
   return (
-    <div className="page-head">
+    <div className={compact ? "page-head is-compact" : "page-head"}>
       <div className="wrap">
         <div className="crumbs">
           <Link to="/">홈</Link>

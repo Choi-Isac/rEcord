@@ -21,8 +21,8 @@ export const flexWeight = (level) => FLEX_WEIGHT[level] ?? 1;
 // 간편 입력 문항(questions.js의 id)별 짧은 이름. 난방은 방식과 시간을 함께 본다
 export const FLEX_ITEMS = [
   { id: "commuteDays", category: "transport", label: "통학 일수" },
-  { id: "commuteMinutes", category: "transport", label: "통학 시간" },
   { id: "commuteMode", category: "transport", label: "통학 수단" },
+  { id: "commuteMinutes", category: "transport", label: "통학 시간" },
   { id: "homeTrips", category: "transport", label: "본가 등 장거리 이동" },
   { id: "flights", category: "transport", label: "비행기 여행" },
   { id: "housing", category: "housing", label: "사는 곳" },

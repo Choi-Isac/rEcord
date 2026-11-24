@@ -18,10 +18,17 @@ import {
   WEEKS_PER_YEAR,
 } from "./factors.js";
 
+// note: 입력 화면의 영역 설명 아래에 덧붙이는 안내 (식생활: 결과 화면 '기본 식단' 안내와 같은 내용)
 export const CATEGORIES = [
   { key: "transport", label: "이동", icon: "🚌", desc: "통학, 장거리 이동, 비행기" },
   { key: "housing", label: "주거", icon: "🏠", desc: "사는 곳의 전기와 냉난방" },
-  { key: "food", label: "식생활", icon: "🍚", desc: "식단과 배달·외식" },
+  {
+    key: "food",
+    label: "식생활",
+    icon: "🍚",
+    desc: "식단과 배달·외식",
+    note: `기본 식단(곡물·채소·유제품 등, 연 ${FOOD.base.toLocaleString("ko-KR")}kg)은 모든 사람에게 같은 값으로 합계에 포함돼요.`,
+  },
   { key: "goods", label: "소비", icon: "🛍️", desc: "옷, 택배, 일회용품" },
 ];
 

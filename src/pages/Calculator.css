@@ -50,6 +50,7 @@
 .q-section-head h2 { margin: 0; font-size: 24px; letter-spacing: -.02em; line-height: 1.3; }
 .q-section-head p { margin: 0; font-size: 14px; color: var(--ink-2); }
 .q-section-head .step-count { font-size: 12px; font-weight: 700; color: var(--accent); }
+.q-section-head .q-section-note { margin-top: 2px; font-size: 12px; color: var(--ink-3); }
 
 .step-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
 
@@ -150,6 +151,8 @@
 .cell.is-selected { border-color: var(--accent); background: var(--accent-soft); }
 .cell.is-selected .cell-value { color: var(--accent); }
 .cell .default-tag { margin-top: 2px; }
+.cells-caption { display: none; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 8px 0 0; font-size: 13px; color: var(--ink-2); }
+.cells-caption b { color: var(--accent); }
 .chip-text .default-tag { align-self: flex-start; margin-top: 3px; }
 
 /* 여러 답을 묶은 문항(난방): 답마다 작은 제목 */
@@ -169,9 +172,44 @@
 /* 실시간 요약 */
 .live { position: sticky; top: 84px; padding: 22px; }
 .live-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
-.live-value { font-size: 38px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; margin-top: 4px; }
+.live-value { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; font-size: 38px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; margin-top: 4px; }
+/* 방금 고른 답으로 늘거나 준 양: 늘면 bad, 줄면 good. 바뀔 때마다 짧게 나타난다 */
+.live-delta {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 99px; font-size: 13px; font-weight: 800;
+  letter-spacing: 0; line-height: 1.3; white-space: nowrap; animation: live-in .25s ease-out;
+}
+.live-delta-cat { font-weight: 700; opacity: .85; }
+.live-delta.is-up { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
+.live-delta.is-down { color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); }
+@keyframes live-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .live-delta, .live-list em { animation: none; } }
+/* 지금 항목의 배출량 막대: 전체 중 지금 문항(단계) 몫만 영역 색 */
+.live-focus { margin: 0 0 14px; }
+.live-focus-bar { display: flex; gap: 2px; height: 10px; border-radius: 99px; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
+.live-focus-bar span { display: block; flex: none; height: 100%; opacity: .28; transition: width .3s ease; }
+.live-focus-bar span.is-on { opacity: 1; }
+/* 두 영역에 걸친 지금 항목(배달·외식 + 용기)은 간격 없이 한 덩어리로 */
+.live-focus-bar span.is-on + span.is-on { margin-left: -2px; }
+/* 폭이 0인 조각은 간격도 차지하지 않게 */
+.live-focus-bar span[style*="width: 0%"] { display: none; }
+.live-focus-text { display: flex; align-items: center; flex-wrap: wrap; gap: 0 6px; margin: 6px 0 0; font-size: 13px; color: var(--ink-2); }
+.live-focus-text strong { color: var(--ink); }
+.live-focus-share { color: var(--ink-3); }
+.live-focus-track { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; }
+.live-focus-end { font-size: 11px; font-weight: 600; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* 최대 크기가 바뀐 직후(1.5초): 오른쪽 끝 숫자를 옅은 강조색 알약으로, 막대 테두리도 옅은 강조색으로 (막대 내용은 가리지 않게) */
+/* 강조가 켜지고 꺼져도 폭이 같도록 굵기·여백은 늘 같게. 화살표는 알약 오른쪽 바깥에 겹쳐 놓아 자리를 차지하지 않는다 */
+.live-focus-end.is-max { position: relative; padding: 1px 6px; border-radius: 99px; font-weight: 700; transition: background .2s, color .2s; }
+.live-focus-arrow { position: absolute; left: calc(100% + 2px); top: 50%; transform: translateY(-50%); font-size: 9px; color: var(--accent); visibility: hidden; }
+.live-focus-end.is-changed { background: var(--accent-soft); color: var(--accent); }
+.live-focus-end.is-changed .live-focus-arrow { visibility: visible; }
+.live-focus-track.is-rescaled .live-focus-bar { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
+.live-list li.is-changed span { color: var(--ink); font-weight: 700; }
+.live-list em { margin-left: 8px; font-size: 12px; font-style: normal; font-weight: 800; animation: live-in .25s ease-out; display: inline-block; }
+.live-list em.is-up { color: var(--bad); }
+.live-list em.is-down { color: var(--good); }
 .live-value small { font-size: 15px; font-weight: 600; color: var(--ink-2); margin-left: 4px; }
-.live-range { font-size: 13px; color: var(--ink-3); margin-bottom: 14px; }
+.live-range { font-size: 13px; color: var(--ink-3); margin-bottom: 10px; }
 .live-list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 7px; }
 .live-list li { display: grid; grid-template-columns: 14px 1fr auto; align-items: center; gap: 8px; font-size: 14px; }
 .live-list li span { color: var(--ink-2); }
@@ -182,6 +220,7 @@
 .live-default { color: var(--ink-3); }
 .live-progress { margin: 6px 0 12px; font-size: 13px; color: var(--ink-2); }
 .live-note { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); }
+.live-back { display: none; }
 .key { display: inline-block; flex: none; }
 .key-rect { width: 10px; height: 10px; border-radius: 3px; }
 
@@ -194,10 +233,17 @@
     box-shadow: 0 -6px 20px rgba(0, 0, 0, .08); margin: 0 -20px;
   }
   .live-list, .live-note, .live-range { display: none; }
+  /* 아래 바: 입력 진행 막대 대신 지금 항목의 배출량 막대 (진행은 위의 단계 표시와 문항 점으로 본다) */
+  .live .progress { display: none; }
+  .live-focus { grid-column: 1 / -1; grid-row: 3; margin: 4px 0 0; }
+  .live-focus-bar { height: 8px; }
+  .live-focus-text { margin-top: 4px; font-size: 12px; }
   .live-label { grid-column: 1; }
-  .live-value { grid-column: 1; font-size: 24px; margin: 0; }
-  .live .progress { grid-column: 1 / -1; grid-row: 3; }
-  .live-progress { grid-column: 1 / -1; grid-row: 4; margin: 0; font-size: 12px; }
+  /* 합계와 변화량은 한 줄로: 영역 이름은 막대 색이 대신 알려 주므로 뺀다 */
+  .live-value { grid-column: 1; flex-wrap: nowrap; white-space: nowrap; font-size: 24px; margin: 0; gap: 6px; }
+  .live-delta { font-size: 12px; padding: 2px 7px; }
+  .live-delta-cat { display: none; }
+  .live-progress { display: none; }
   .live .btn { grid-column: 2; grid-row: 1 / 3; width: auto; }
   /* 다음 버튼은 화면 아래 고정 바에 있으므로 본문에서는 이전 버튼만 */
   .step-next { display: none; }
@@ -206,15 +252,57 @@
   .mode-card, .consent { padding: 20px; }
   .q { padding: 18px 16px; }
   .chips { grid-template-columns: repeat(2, 1fr); }
-  .cells { grid-template-columns: 1fr; gap: 6px; }
   .detail-hint { display: none; } /* '자세히 입력하기' 버튼 옆 안내: 휴대폰에서는 버튼만 */
-  .cell { flex-direction: row; flex-wrap: wrap; gap: 4px 12px; padding: 10px 14px; text-align: left; }
-  .cell-value { min-width: 82px; }
+  /* 칸: 한 줄에 값만, 고른 칸의 설명은 아래 한 줄로 */
+  .cells { gap: 5px; }
+  .cell { padding: 11px 2px; }
+  .cell-value { font-size: 14px; white-space: nowrap; }
+  .cell-sub, .cell .default-tag { display: none; }
+  .cells-caption { display: flex; }
   /* 좁은 화면: 현재 단계만 이름을 보여 주고 나머지는 번호만 */
   .stepper button { justify-content: center; padding: 8px 4px; gap: 0; }
   .stepper-label, .stepper small { display: none; }
   .stepper .is-current button { gap: 6px; }
   .stepper .is-current .stepper-label { display: inline; }
+  /* 문항을 하나씩 보여 주는 화면: 영역 머리말을 줄여 문항이 한 화면에 들어오게 */
+  .q-section { padding-top: 12px; }
+  .calc-layout { padding-top: 14px; }
+  .q-section-head { gap: 10px; margin-bottom: 10px; }
+  .q-section-icon { width: 38px; height: 38px; border-radius: 11px; font-size: 20px; }
+  .q-section-head h2 { font-size: 19px; }
+  .q-section-head p { font-size: 13px; }
+  .step-nav { margin-top: 12px; }
+  .q { padding: 16px 14px; }
+  .q-head { margin-bottom: 10px; }
+  .q-parts { gap: 12px; }
+  .detail-bar { margin-top: 10px; padding-top: 10px; }
+  /* 합계 바는 화면 맨 아래에 고정하고, 그만큼 본문 아래를 비운다. 푸터는 이 화면에서만 숨겨 스크롤이 생기지 않게 */
+  .live { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; }
+  .calc-layout { padding-bottom: 112px; }
+  /* 이전 버튼도 아래 바로 (본문의 이전·다음 줄은 숨김) */
+  .step-nav { display: none; }
+  .live { grid-template-columns: 1fr auto auto; }
+  .live .live-back { display: inline-flex; grid-column: 2; grid-row: 1 / 3; width: 48px; padding-left: 0; padding-right: 0; justify-content: center; font-size: 18px; }
+  .live .live-next { grid-column: 3; }
+  body:has(.calc-layout) .site-footer { display: none; }
+}
+
+/* 휴대폰: 제목 오른쪽의 영역 안 문항 점. 채움 = 답함, 길게 = 지금 문항 (누르면 그 문항으로) */
+.q-dots { display: flex; align-items: center; gap: 10px; }
+.q-dot {
+  position: relative; width: 12px; height: 12px; padding: 0; border-radius: 99px; border: 2px solid var(--ink-3);
+  background: none; cursor: pointer; transition: width .2s, background .2s;
+}
+/* 누르기 쉽게 보이지 않는 터치 영역을 점 사이 간격까지 넓힌다 (세로 약 44px) */
+.q-dot::after { content: ""; position: absolute; inset: -16px -5px; }
+.q-dot.is-done { background: var(--ink-3); }
+.q-dot.is-current { width: 28px; border-color: var(--accent); background: var(--accent); }
+
+@media (max-width: 360px) {
+  /* 아주 좁은 화면: 합계와 변화량이 한 줄에 들어가도록 글자를 조금 줄인다 */
+  .live-value { font-size: 21px; gap: 4px; }
+  .live-value small { font-size: 13px; margin-left: 2px; }
+  .live-delta { font-size: 11px; padding: 2px 6px; }
 }
 
 /* ── 자세히 입력 펼침 (v0.2) ──────────────── */
@@ -286,8 +374,8 @@
 .d-bill .d-num .input { width: 120px; }
 
 @media (max-width: 640px) {
-  /* 휴대폰: 버튼은 항상 제목 아래 줄 */
-  .q-section-head { grid-template-columns: auto minmax(0, 1fr); row-gap: 12px; }
+  /* 휴대폰: 아이콘 · 제목 · 문항 점 (영역 전체 '자세히 입력' 버튼은 휴대폰에 없다) */
+  .q-section-head { grid-template-columns: auto minmax(0, 1fr) auto; row-gap: 12px; }
   .detail-all { grid-column: 1 / -1; justify-self: start; }
   .detail { padding: 14px; }
   .d-percent { min-width: 0; width: 100%; max-width: none; }

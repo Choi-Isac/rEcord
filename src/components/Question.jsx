@@ -33,19 +33,39 @@ function ChipField({ q, value, isDefault, onChange, labelId }) {
   );
 }
 
-// 칸 고르기(냉난방 하루 시간): 칸마다 값과 알아보기 쉬운 설명을 함께 보여 준다
+// 칸 고르기(냉난방 하루 시간): 칸마다 값과 알아보기 쉬운 설명을 함께 보여 준다.
+// 휴대폰에서는 칸을 한 줄에 값만 놓고, 고른 칸의 설명을 아래 한 줄(cells-caption)로 보여 준다
 function CellsField({ q, value, isDefault, onChange, labelId }) {
+  const picked = q.options.find((o) => o.value === value);
   return (
-    <div className="cells" role="radiogroup" aria-labelledby={labelId} style={{ "--n": q.options.length }}>
-      {q.options.map((o) => (
-        <label key={o.value} className={`cell${value === o.value ? " is-selected" : ""}`}>
-          <input type="radio" name={q.id} checked={value === o.value} onChange={() => onChange(q.id, o.value)} />
-          <span className="cell-value">{o.label}</span>
-          <span className="cell-sub">{o.sub}</span>
-          {isDefault && value === o.value && <span className="default-tag">기본값</span>}
-        </label>
-      ))}
-    </div>
+    <>
+      <div className="cells" role="radiogroup" aria-labelledby={labelId} style={{ "--n": q.options.length }}>
+        {q.options.map((o) => (
+          <label key={o.value} className={`cell${value === o.value ? " is-selected" : ""}`}>
+            <input type="radio" name={q.id} checked={value === o.value} onChange={() => onChange(q.id, o.value)} />
+            <span className="cell-value">
+              {o.short ? (
+                <>
+                  <span className="only-desktop">{o.label}</span>
+                  <span className="only-mobile">{o.short}</span>
+                </>
+              ) : (
+                o.label
+              )}
+            </span>
+            <span className="cell-sub">{o.sub}</span>
+            {isDefault && value === o.value && <span className="default-tag">기본값</span>}
+          </label>
+        ))}
+      </div>
+      {/* 화면 읽기 프로그램은 칸 안의 설명을 읽으므로 이 줄은 건너뛴다 */}
+      {picked && (
+        <p className="cells-caption" aria-hidden="true">
+          <b>{picked.label}</b> {picked.sub}
+          {isDefault && <span className="default-tag">기본값</span>}
+        </p>
+      )}
+    </>
   );
 }
 

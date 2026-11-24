@@ -11,11 +11,12 @@ export const COMMUTE_MINUTE_STEPS = [
   ...Array.from({ length: 18 }, (_, i) => 35 + i * 5),
 ];
 
-// 냉난방 하루 사용 시간 5칸. 값 1~5 = factors.js CLIMATE_HOURS의 순서
+// 냉난방 하루 사용 시간 5칸. 값 1~5 = factors.js CLIMATE_HOURS의 순서. short: 휴대폰의 좁은 칸에 쓰는 이름
 const hourCells = (captions) =>
   CLIMATE_HOURS.map((h, i) => ({
     value: i + 1,
     label: i === CLIMATE_HOURS.length - 1 ? `${h}시간 이상` : `${h}시간`,
+    ...(i === CLIMATE_HOURS.length - 1 && { short: `${h}시간+` }),
     sub: captions[i],
   }));
 
@@ -34,19 +35,6 @@ export const QUESTIONS = [
     default: 4,
     format: (v) => (v === 0 ? "통학 안 함" : `주 ${v}일`),
     scale: ["0일", "7일"],
-  },
-  {
-    id: "commuteMinutes",
-    category: "transport",
-    type: "slider",
-    label: "통학 편도 시간은 얼마나 걸리나요?",
-    hint: "집을 나서서 강의실에 도착할 때까지, 걷고 기다리는 시간도 포함해 주세요.",
-    hintShort: "걷고 기다리는 시간도 포함해요.",
-    steps: COMMUTE_MINUTE_STEPS,
-    default: 40,
-    format: (v) => `${v}분`,
-    scale: ["5분", "120분"],
-    skipWhen: noCommute,
   },
   {
     id: "commuteMode",
@@ -68,12 +56,25 @@ export const QUESTIONS = [
     skipWhen: noCommute,
   },
   {
+    id: "commuteMinutes",
+    category: "transport",
+    type: "slider",
+    label: "통학 편도 시간은 얼마나 걸리나요?",
+    hint: "집을 나서서 강의실에 도착할 때까지, 걷고 기다리는 시간도 포함해 주세요.",
+    hintShort: "걷고 기다리는 시간도 포함해요.",
+    steps: COMMUTE_MINUTE_STEPS,
+    default: 40,
+    format: (v) => `${v}분`,
+    scale: ["5분", "120분"],
+    skipWhen: noCommute,
+  },
+  {
     id: "homeTrips",
     category: "transport",
     type: "chips",
-    label: "본가 방문 등 장거리 이동은 얼마나 자주 하나요?",
-    hint: "기차·고속버스로 다른 도시에 다녀오는 왕복 기준이에요.",
-    hintShort: "다른 도시 왕복 기준이에요.",
+    label: "다른 도시에 얼마나 자주 다녀오나요?",
+    hint: "본가 방문, 여행처럼 기차·고속버스로 오가는 장거리 이동을 왕복 1번으로 세어 주세요.",
+    hintShort: "본가 방문·여행 등 장거리 왕복 기준이에요.",
     options: [
       { value: "none", label: "거의 없음" },
       { value: "semester", label: "학기당 1~2회" },
